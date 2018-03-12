@@ -1,5 +1,5 @@
 ---
-title: hihocoder Spring Out
+title: Hihocoder Spring Out
 date: 2016-02-23
 tag: OJ
 ---

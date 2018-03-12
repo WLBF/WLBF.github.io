@@ -1,5 +1,5 @@
 ---
-title: hiho Numeric Keypad
+title: Hihocoder Numeric Keypad
 date: 2016-02-20
 tag: OJ
 ---

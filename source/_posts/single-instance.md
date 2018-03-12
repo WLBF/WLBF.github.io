@@ -1,5 +1,5 @@
 ---
-title: single instance
+title: Single Instance
 date: 2018-02-03 01:16:12
 tags: Rust
 ---

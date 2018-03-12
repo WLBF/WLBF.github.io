@@ -1,5 +1,5 @@
 ---
-title: unicode
+title: Unicode
 date: 2018-02-07 00:29:43
 tags: encoding
 ---
