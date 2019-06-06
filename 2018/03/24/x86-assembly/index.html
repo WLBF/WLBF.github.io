@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="X86 Assembly Calling Convention">
+
+
+
+
+  <meta name="keywords" content="assembly,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2018/03/24/x86-assembly/">
+
+
+<meta name="description" content="Calling Convention总结一下关于汇编函数调用过程的知识。 References： http://www.cs.virginia.edu/~evans/cs216/guides/x86.htmlhttps://en.wikibooks.org/wiki/X86_Assembly Make a subrouting call Before calling a subrouting, s">
+<meta name="keywords" content="assembly">
+<meta property="og:type" content="article">
+<meta property="og:title" content="X86 Assembly Calling Convention">
+<meta property="og:url" content="http://yoursite.com/2018/03/24/x86-assembly/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="Calling Convention总结一下关于汇编函数调用过程的知识。 References： http://www.cs.virginia.edu/~evans/cs216/guides/x86.htmlhttps://en.wikibooks.org/wiki/X86_Assembly Make a subrouting call Before calling a subrouting, s">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-04-19T13:58:33.429Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="X86 Assembly Calling Convention">
+<meta name="twitter:description" content="Calling Convention总结一下关于汇编函数调用过程的知识。 References： http://www.cs.virginia.edu/~evans/cs216/guides/x86.htmlhttps://en.wikibooks.org/wiki/X86_Assembly Make a subrouting call Before calling a subrouting, s">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> X86 Assembly Calling Convention - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          X86 Assembly Calling Convention
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 24 2018
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h1 id="Calling-Convention"><a href="#Calling-Convention" class="headerlink" title="Calling Convention"></a>Calling Convention</h1><p>总结一下关于汇编函数调用过程的知识。</p>
+<p>References：</p>
+<p><a href="http://www.cs.virginia.edu/~evans/cs216/guides/x86.html" target="_blank" rel="noopener">http://www.cs.virginia.edu/~evans/cs216/guides/x86.html</a><br><a href="https://en.wikibooks.org/wiki/X86_Assembly" target="_blank" rel="noopener">https://en.wikibooks.org/wiki/X86_Assembly</a></p>
+<h2 id="Make-a-subrouting-call"><a href="#Make-a-subrouting-call" class="headerlink" title="Make a subrouting call"></a>Make a subrouting call</h2><ol>
+<li><p>Before calling a subrouting, save the <em>caller-saved</em> registers (<code>EAX, ECX, EDX</code>).</p>
+</li>
+<li><p>Push the parameters onto the stack.</p>
+</li>
+<li><p>Use <code>call</code> instruction, places the retrun address onto stack, and branches to the subroutine code.</p>
+</li>
+</ol>
+<h2 id="Callee-prologue"><a href="#Callee-prologue" class="headerlink" title="Callee prologue"></a>Callee prologue</h2><ol>
+<li>Push old base pointer value, for restore it after subroutine.</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">push ebp</span><br><span class="line">mov ebp, esp</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>Allocate local variables by make space on the stack. e.g.</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sub esp, 12</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>Save the values of the <em>callee-saved</em> register push them onto stack (<code>EBX, EDI, ESI</code>).</li>
+</ol>
+<h2 id="Callee-body-proceed"><a href="#Callee-body-proceed" class="headerlink" title="Callee body proceed"></a>Callee body proceed</h2><h2 id="Callee-epilogue"><a href="#Callee-epilogue" class="headerlink" title="Callee epilogue"></a>Callee epilogue</h2><ol>
+<li><p>Leave the return value in <code>EAX</code>.</p>
+</li>
+<li><p>Restore the old values of any <em>callee-saved</em> registers (<code>EDI, ESI, EBX</code>).</p>
+</li>
+<li><p>Deallocate local variables.</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mov esp, ebp</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li><p>Restore the caller’s base pointer value by poping <code>EBP</code> from the stack.</p>
+</li>
+<li><p>Return to the caller by executing a return <code>ret</code> instruction, find and reomve the <em>return address</em> from the stack.</p>
+</li>
+</ol>
+<h2 id="After-subroutine-return"><a href="#After-subroutine-return" class="headerlink" title="After subroutine return"></a>After subroutine return</h2><ol>
+<li><p>Remove the parameters from stack.</p>
+</li>
+<li><p>Restore the contents of <em>caller-saved</em> registers (<code>EAX, ECX, EDX</code>)</p>
+</li>
+</ol>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/assembly/">assembly</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2018/09/24/nodeos-elasticsearch-plugin/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Nodeos Elasticsearch Plugin</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2018/03/18/which-rs/">
+        <span class="next-text nav-default">Rust Which</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2019
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

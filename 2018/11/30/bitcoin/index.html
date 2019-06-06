@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Bitcoin">
+
+
+
+
+  <meta name="keywords" content="blockchain,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2018/11/30/bitcoin/">
+
+
+<meta name="description" content="TransactionsWe define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction">
+<meta name="keywords" content="blockchain">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Bitcoin">
+<meta property="og:url" content="http://yoursite.com/2018/11/30/bitcoin/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="TransactionsWe define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/transactions.svg">
+<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/statetransition.png">
+<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/block.png">
+<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/merkle-tree.svg">
+<meta property="og:updated_time" content="2019-04-19T13:58:33.425Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Bitcoin">
+<meta name="twitter:description" content="TransactionsWe define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction">
+<meta name="twitter:image" content="http://yoursite.com/2018/11/30/bitcoin/transactions.svg">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Bitcoin - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Bitcoin
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 30 2018
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="Transactions"><a href="#Transactions" class="headerlink" title="Transactions"></a>Transactions</h2><p>We define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction is to be aware of all transactions.</p>
+<div align="center"><br>    <img src="transactions.svg" width="80%" height="80%"><br></div>
+
+<h2 id="Bitcoin-As-A-State-Transition-System"><a href="#Bitcoin-As-A-State-Transition-System" class="headerlink" title="Bitcoin As A State Transition System"></a>Bitcoin As A State Transition System</h2><div align="center"><br>    <img src="statetransition.png" width="80%" height="80%"><br></div>
+
+<p>The ledger of a cryptocurrency such as Bitcoin can be thought of as a state transition system. The “state” in Bitcoin is the collection of all coins (technically, “unspent transaction outputs” or UTXO) that have been mined and not yet spent, with each UTXO having a denomination and an owner (defined by a 20-byte address which is essentially a cryptographic public key). A transaction contains one or more inputs, with each input containing a reference to an existing UTXO and a cryptographic signature produced by the private key associated with the owner’s address, and one or more outputs, with each output containing a new UTXO to be added to the state. The state transition function <code>APPLY(S,TX) -&gt; S&#39; or ERROR</code> can be defined roughly as follows:</p>
+<ol>
+<li>For each input in TX:<ul>
+<li>If the referenced UTXO is not in S, return an error.</li>
+<li>If the provided signature does not match the owner of the UTXO, return an error.</li>
+</ul>
+</li>
+<li>If the sum of the denominations of all input UTXO is less than the sum of the denominations of all output UTXO, return an error.</li>
+<li>Return S’ with all input UTXO removed and all output UTXO added.</li>
+</ol>
+<h2 id="Proof-of-Work"><a href="#Proof-of-Work" class="headerlink" title="Proof-of-Work"></a>Proof-of-Work</h2><div align="center"><br>    <img src="block.png" width="80%" height="80%"><br></div>
+
+<p> Bitcoin’s decentralized consensus process requires nodes in the network to continuously attempt to produce packages of transactions called “blocks”. The network is intended to produce roughly one block every ten minutes.</p>
+<p>The algorithm for checking if a block is valid, expressed in this paradigm, is as follows:</p>
+<ol>
+<li>Check if the previous block referenced by the block exists and is valid.</li>
+<li>Check that the timestamp of the block is greater than that of the previous blockfn. 2 and less than 2 hours into the future</li>
+<li>Check that the proof of work on the block is valid.</li>
+<li>Let <code>S[0]</code> be the state at the end of the previous block.</li>
+<li>Suppose TX is the block’s transaction list with n transactions. For all i in 0…n-1, set <code>S[i+1] = APPLY( S[i], TX[i] )</code> If any application returns an error, exit and return false.</li>
+<li>Return true, and register <code>S[n]</code> as the state at the end of this block.</li>
+</ol>
+<p>Essentially, each transaction in the block must provide a valid state transition from what was the canonical state before the transaction was executed to some new state. Note that the state is not encoded in the block in any way; it is purely an abstraction to be remembered by the validating node and can only be (securely) computed for any block by starting from the genesis state and sequentially applying every transaction in every block. Additionally, note that the order in which the miner includes transactions into the block matters.</p>
+<p>The proof-of-work involves scanning for a value that when hashed, such as with SHA-256, the hash begins with a number of zero bits. The average work required is exponential in the number of zero bits required and can be verified by executing a single hash. We implement the proof-of-work by incrementing a nonce in the block until a value is found that gives the block’s hash the required zero bits. Once the CPU effort has been expended to make it satisfy the proof-of-work, the block cannot be changed without redoing the work. As later blocks are chained after it, the work to change the block would include redoing all the blocks after it.</p>
+<p>To compensate for increasing hardware speed and varying interest in running nodes over time, the proof-of-work difficulty is determined by a moving average targeting an average number of blocks per hour. If they’re generated too fast, the difficulty increases.</p>
+<h2 id="Incentive"><a href="#Incentive" class="headerlink" title="Incentive"></a>Incentive</h2><p>Whenever a miner mines a block, it includes a special transaction called a coinbase transaction. This transaction has no inputs and creates X bitcoins equal to the current block reward which are awarded to the miner of the block. Additionally, if any transaction has a higher total denomination in its inputs than in its outputs, the difference also goes to the miner as a “transaction fee”.</p>
+<h2 id="Merkle-Tree"><a href="#Merkle-Tree" class="headerlink" title="Merkle Tree"></a>Merkle Tree</h2><p>Transactions are hashed in a Merkle Tree, with only the root included in the block’s hash.</p>
+<div align="center"><br>    <img src="merkle-tree.svg" width="50%" height="50%"><br></div>
+
+<p>Resources:<br><a href="https://bitcoin.org/bitcoin.pdf" target="_blank" rel="noopener">https://bitcoin.org/bitcoin.pdf</a><br><a href="https://github.com/ethereum/wiki/wiki/White-Paper#bitcoin-as-a-state-transition-system" target="_blank" rel="noopener">https://github.com/ethereum/wiki/wiki/White-Paper#bitcoin-as-a-state-transition-system</a><br><a href="https://github.com/paritytech/parity-bitcoin" target="_blank" rel="noopener">https://github.com/paritytech/parity-bitcoin</a><br><a href="https://github.com/bitcoinbook/bitcoinbook" target="_blank" rel="noopener">https://github.com/bitcoinbook/bitcoinbook</a></p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/blockchain/">blockchain</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2019/06/06/eos-permission-authority/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Permission and Authority In EOS</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2018/09/24/nodeos-elasticsearch-plugin/">
+        <span class="next-text nav-default">Nodeos Elasticsearch Plugin</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2019
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Nodeos Elasticsearch Plugin">
+
+
+
+
+  <meta name="keywords" content="eos,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2018/09/24/nodeos-elasticsearch-plugin/">
+
+
+<meta name="description" content="最近两个月的工作成果：https://github.com/EOSLaoMao/elasticsearch_plugin First Implemention一开始是完全照抄 mongo_db_plugin，分成 8 种类型的数据： 12345678account_controlsaccountsaction_tracesblock_statesblockspub_keystransaction_">
+<meta name="keywords" content="eos">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nodeos Elasticsearch Plugin">
+<meta property="og:url" content="http://yoursite.com/2018/09/24/nodeos-elasticsearch-plugin/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="最近两个月的工作成果：https://github.com/EOSLaoMao/elasticsearch_plugin First Implemention一开始是完全照抄 mongo_db_plugin，分成 8 种类型的数据： 12345678account_controlsaccountsaction_tracesblock_statesblockspub_keystransaction_">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-04-19T13:58:33.429Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nodeos Elasticsearch Plugin">
+<meta name="twitter:description" content="最近两个月的工作成果：https://github.com/EOSLaoMao/elasticsearch_plugin First Implemention一开始是完全照抄 mongo_db_plugin，分成 8 种类型的数据： 12345678account_controlsaccountsaction_tracesblock_statesblockspub_keystransaction_">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Nodeos Elasticsearch Plugin - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Nodeos Elasticsearch Plugin
+        
+      </h1>
+
+      <time class="post-time">
+          Sep 24 2018
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>最近两个月的工作成果：<a href="https://github.com/EOSLaoMao/elasticsearch_plugin" target="_blank" rel="noopener">https://github.com/EOSLaoMao/elasticsearch_plugin</a></p>
+<h2 id="First-Implemention"><a href="#First-Implemention" class="headerlink" title="First Implemention"></a>First Implemention</h2><p>一开始是完全照抄 <a href="https://github.com/EOSIO/eos/tree/master/plugins/mongo_db_plugin" target="_blank" rel="noopener">mongo_db_plugin</a>，分成 8 种类型的数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">account_controls</span><br><span class="line">accounts</span><br><span class="line">action_traces</span><br><span class="line">block_states</span><br><span class="line">blocks</span><br><span class="line">pub_keys</span><br><span class="line">transaction_traces</span><br><span class="line">transactions</span><br></pre></td></tr></table></figure>
+<p>期间碰到了 Elasticsearch 6.x breaking change 弃用 <code>_type</code> 的坑， 详见：<br><a href="https://www.elastic.co/guide/en/elasticsearch/reference/master/removal-of-types.html" target="_blank" rel="noopener">https://www.elastic.co/guide/en/elasticsearch/reference/master/removal-of-types.html</a></p>
+<p>写完了之后发现速度惨不忍睹， hard replay 前 3000 blocks 只有 1.3 block/s 的速度。很明显直接套用 <code>mongo_db_plugin</code> 的逻辑和数据结构用在 Elasticsearch 上是不合适的，需要一些修改。</p>
+<h2 id="Optimization"><a href="#Optimization" class="headerlink" title="Optimization"></a>Optimization</h2><p>第一个改动是 <code>accounts</code> 的数据结构， Elasitcsearch 用的 http 和 MongoDB 自己的协议比起来性能上还是有差距的，为了尽量减少请求次数，把 <code>accounts</code>，<code>account_controls</code>，<code>pub_keys</code> 合并到一条记录里去，并且使用 account_name 作为 <code>_id</code> 免去了更新前先查询的操作，合并之后数据结构如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">GET accounts/_doc/6138663577826885632</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"eosio"</span>,</span><br><span class="line">    <span class="attr">"createAt"</span>: <span class="string">"1537873749097"</span>,</span><br><span class="line">    <span class="attr">"pub_keys"</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="attr">"permission"</span>: <span class="string">"owner"</span>,</span><br><span class="line">        <span class="attr">"key"</span>: <span class="string">"eosio.prods"</span></span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"account_controls"</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="attr">"name"</span>: <span class="string">"eosio.prods"</span>,</span><br><span class="line">        <span class="attr">"permission"</span>: <span class="string">"owner"</span></span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"updateAt"</span>: <span class="string">"1537863826973"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html" target="_blank" rel="noopener">Elasticsearch Update API</a> 支持通过 <a href="https://www.elastic.co/guide/en/elasticsearch/painless/6.4/painless-lang-spec.html" target="_blank" rel="noopener">Painless Script</a> 操作，可以实现一些灵活的功能。例如更新上面的 document 可以通过如下请求：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">POST accounts/_doc/6138663577826885632/_update</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"script"</span>: &#123;</span><br><span class="line">    <span class="attr">"lang"</span>:<span class="string">"painless"</span>,</span><br><span class="line">    <span class="attr">"source"</span>:<span class="string">""</span><span class="string">"</span></span><br><span class="line"><span class="string">    ctx._source.pub_keys.removeIf(item -&gt; item.permission == params.permission);</span></span><br><span class="line"><span class="string">    ctx._source.pub_keys.addAll(params.pub_keys);</span></span><br><span class="line"><span class="string">    ctx._source.account_controls.removeIf(item -&gt; item.permission == params.permission);</span></span><br><span class="line"><span class="string">    ctx._source.account_controls.addAll(params.account_controls);</span></span><br><span class="line"><span class="string">    ctx._source.updateAt = params.updateAt;</span></span><br><span class="line"><span class="string">    "</span><span class="string">""</span>,</span><br><span class="line">    <span class="attr">"params"</span>: &#123;</span><br><span class="line">      <span class="attr">"permission"</span>: <span class="string">"owner"</span>,</span><br><span class="line">      <span class="attr">"pub_keys"</span>: [</span><br><span class="line">        &#123;<span class="attr">"permission"</span>:<span class="string">"owner"</span>,<span class="attr">"key"</span>:<span class="string">"eosio.prods"</span>&#125;  </span><br><span class="line">      ],</span><br><span class="line">      <span class="attr">"account_controls"</span>:[</span><br><span class="line">        &#123;<span class="attr">"permission"</span>:<span class="string">"owner"</span>,<span class="attr">"name"</span>:<span class="string">"eosio.prods"</span>&#125;</span><br><span class="line">      ],</span><br><span class="line">      <span class="attr">"updateAt"</span>:<span class="string">"1537863826973"</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<p>整个插件的核心是下面 4 个函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">_process_applied_transaction</span><br><span class="line">_process_accepted_transaction</span><br><span class="line">_process_accepted_block</span><br><span class="line">_process_irreversible_block</span><br></pre></td></tr></table></figure>
+<p>其中最耗时的是 <code>_process_applied_transaction</code> 原因是需要递归解析所有的 <code>action</code> 并且创建以及更新 <code>accounts</code> 信息，上面已经对 <code>accounts</code> 做出了一些修改。其他部分我没有想到什么好办法，唯一想到能做的是把递归实现改栈实现。我猜测即使改成手动用栈来实现也没有什么大的提升，理由是递归的深度不高，最多也不过是前几千个 block 中有打包了大于 100 个 <code>action</code> 的 <code>transaction</code>, 而且原本的递归是可以被尾递归优化掉的, 不清楚编译器有没有优化。为了心理安慰还是改写成了栈实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::<span class="built_in">stack</span>&lt;<span class="built_in">std</span>::reference_wrapper&lt;chain::action_trace&gt;&gt; <span class="built_in">stack</span>;</span><br><span class="line"><span class="built_in">stack</span>.emplace(atrace);</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> ( !<span class="built_in">stack</span>.empty() )</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span> &amp;atrace = <span class="built_in">stack</span>.top();</span><br><span class="line">    <span class="built_in">stack</span>.pop();</span><br><span class="line">    write_atraces |= add_action_trace( bulk_action_traces, atrace, executed, now );</span><br><span class="line">    <span class="keyword">auto</span> &amp;inline_traces = atrace.get().inline_traces;</span><br><span class="line">    <span class="keyword">for</span>( <span class="keyword">auto</span> it = inline_traces.rbegin(); it != inline_traces.rend(); ++it ) &#123;</span><br><span class="line">        <span class="built_in">stack</span>.emplace(*it);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<p>更新 <code>blocks</code>，<code>transactions</code> 数据的时候可能会出现数据竞争的问题，Elasticsearch 有一套基于 <a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank" rel="noopener">OCC</a> 的 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-versioning" target="_blank" rel="noopener">version</a> 机制来解决这个问题，需要注意的是首次创建 document 即 <code>_version=1</code> 的 document 是通过 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#operation-type" target="_blank" rel="noopener">_create</a> 来实现的。一个相关的 issue：<a href="https://github.com/elastic/elasticsearch/issues/20702" target="_blank" rel="noopener">https://github.com/elastic/elasticsearch/issues/20702</a></p>
+<p><a href="https://www.elastic.co/blog/elasticsearch-versioning-support" target="_blank" rel="noopener">Elasticsearch Versioning Support</a></p>
+<hr>
+<p>经过上面的改造，速度有了比较明显的提升，但是对比 mongo_db_plugin 还是有些差距。</p>
+<p><a href="https://github.com/EOSLaoMao/elasticsearch_plugin/blob/master/benchmark.md" target="_blank" rel="noopener">Benchmark</a></p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/eos/">eos</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2018/11/30/bitcoin/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Bitcoin</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2018/03/24/x86-assembly/">
+        <span class="next-text nav-default">X86 Assembly Calling Convention</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2019
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
