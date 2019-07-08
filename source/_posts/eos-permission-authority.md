@@ -1,7 +1,7 @@
 ---
 title: Permission and Authority In EOS
 date: 2019-06-06 23:12:11
-tags:
+tags: eos
 ---
 Review of permission and authority system in EOS.
 
