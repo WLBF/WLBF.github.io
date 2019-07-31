@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Unsigned Int Overflow">
+
+
+
+
+  <meta name="keywords" content="debug,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2019/07/30/unsigned-int-overflow/">
+
+
+<meta name="description" content="写出了一个经典的 bug: 1234567891011#include &amp;lt;stdio.h&amp;gt;int main() &amp;#123;    size_t i;    for (i = 10; i &amp;gt;= 0; i--) &amp;#123;        printf(&quot;whatever\n&quot;);    &amp;#125;    return 0;&amp;#125; 一开始看不出来，debug 发现编译器给了">
+<meta name="keywords" content="debug">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unsigned Int Overflow">
+<meta property="og:url" content="http://yoursite.com/2019/07/30/unsigned-int-overflow/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="写出了一个经典的 bug: 1234567891011#include &amp;lt;stdio.h&amp;gt;int main() &amp;#123;    size_t i;    for (i = 10; i &amp;gt;= 0; i--) &amp;#123;        printf(&quot;whatever\n&quot;);    &amp;#125;    return 0;&amp;#125; 一开始看不出来，debug 发现编译器给了">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-07-31T11:17:06.898Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Unsigned Int Overflow">
+<meta name="twitter:description" content="写出了一个经典的 bug: 1234567891011#include &amp;lt;stdio.h&amp;gt;int main() &amp;#123;    size_t i;    for (i = 10; i &amp;gt;= 0; i--) &amp;#123;        printf(&quot;whatever\n&quot;);    &amp;#125;    return 0;&amp;#125; 一开始看不出来，debug 发现编译器给了">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Unsigned Int Overflow - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Unsigned Int Overflow
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 30 2019
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>写出了一个经典的 bug:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">size_t</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">10</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"whatever\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一开始看不出来，debug 发现编译器给了个死循环，才想起来是 <code>size_t</code> 溢出了。</p>
+<figure class="highlight zsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) disass main</span><br><span class="line">Dump of assembler code <span class="keyword">for</span> <span class="keyword">function</span> main:</span><br><span class="line">   0x00000000004004fd &lt;+0&gt;:    push   %rbp</span><br><span class="line">   0x00000000004004fe &lt;+1&gt;:    mov    %rsp,%rbp</span><br><span class="line">   0x0000000000400501 &lt;+4&gt;:    sub    <span class="variable">$0x10</span>,%rsp</span><br><span class="line">   0x0000000000400505 &lt;+8&gt;:    movq   <span class="variable">$0xa</span>,-0x8(%rbp)</span><br><span class="line">   0x000000000040050d &lt;+16&gt;:   mov    <span class="variable">$0x4005a4</span>,%edi</span><br><span class="line">   0x0000000000400512 &lt;+21&gt;:   callq  0x4003f0 &lt;puts@plt&gt;</span><br><span class="line">   0x0000000000400517 &lt;+26&gt;:   subq   <span class="variable">$0x1</span>,-0x8(%rbp)</span><br><span class="line">   0x000000000040051c &lt;+31&gt;:   jmp    0x40050d &lt;main+16&gt;</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></table></figure>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/debug/">debug</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2019/07/20/mit-6-828-2018-memory-bug/">
+        <span class="next-text nav-default">MIT-6.828 2018 Memory Bug</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2019
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
