@@ -62,27 +62,27 @@ type Stanza struct {
 }
 
 func (r *X25519Recipient) Wrap(fileKey []byte) ([]*Stanza, error) {
-  ephemeral := make([]byte, curve25519.ScalarSize)
-  rand.Read(ephemeral)
-  ourPublicKey, err := curve25519.X25519(ephemeral, curve25519.Basepoint)
+    ephemeral := make([]byte, curve25519.ScalarSize)
+    rand.Read(ephemeral)
+    ourPublicKey, err := curve25519.X25519(ephemeral, curve25519.Basepoint)
 
-  sharedSecret, err := curve25519.X25519(ephemeral, r.theirPublicKey)
+    sharedSecret, err := curve25519.X25519(ephemeral, r.theirPublicKey)
 
-  l := &Stanza{
-    Type: "X25519",
-    Args: []string{format.EncodeToString(ourPublicKey)},
-  }
+    l := &Stanza{
+        Type: "X25519",
+        Args: []string{format.EncodeToString(ourPublicKey)},
+    }
 
-  salt := make([]byte, 0, len(ourPublicKey)+len(r.theirPublicKey))
-  salt = append(salt, ourPublicKey...)
-  salt = append(salt, r.theirPublicKey...)
-  h := hkdf.New(sha256.New, sharedSecret, salt, []byte(x25519Label))
-  wrappingKey := make([]byte, chacha20poly1305.KeySize)
-  io.ReadFull(h, wrappingKey)
+    salt := make([]byte, 0, len(ourPublicKey)+len(r.theirPublicKey))
+    salt = append(salt, ourPublicKey...)
+    salt = append(salt, r.theirPublicKey...)
+    h := hkdf.New(sha256.New, sharedSecret, salt, []byte(x25519Label))
+    wrappingKey := make([]byte, chacha20poly1305.KeySize)
+    io.ReadFull(h, wrappingKey)
 
-  wrappedKey, err := aeadEncrypt(wrappingKey, fileKey)
+    wrappedKey, err := aeadEncrypt(wrappingKey, fileKey)
 
-  l.Body = wrappedKey
+    l.Body = wrappedKey
 
   return []*Stanza{l}, nil
 }
@@ -93,27 +93,27 @@ age 定义了一种新的密文格式，第一行是格式的版本，随后是 
 ```golang
 
 func Encrypt(dst io.Writer, recipients ...Recipient) (io.WriteCloser, error) {
-  fileKey := make([]byte, fileKeySize)
-  rand.Read(fileKey）
+    fileKey := make([]byte, fileKeySize)
+    rand.Read(fileKey）
 
-  hdr := &format.Header{}
-  for i, r := range recipients {
-    stanzas, err := r.Wrap(fileKey)
-    for _, s := range stanzas {
-      hdr.Recipients = append(hdr.Recipients, (*format.Stanza)(s))
+    hdr := &format.Header{}
+    for i, r := range recipients {
+        stanzas, err := r.Wrap(fileKey)
+        for _, s := range stanzas {
+            hdr.Recipients = append(hdr.Recipients, (*format.Stanza)(s))
+        }
     }
-  }
 
-  mac, err := headerMAC(fileKey, hdr)
-  hdr.MAC = mac
+    mac, err := headerMAC(fileKey, hdr)
+    hdr.MAC = mac
 
-  hdr.Marshal(dst)
+    hdr.Marshal(dst)
 
-  nonce := make([]byte, streamNonceSize)
-  rand.Read(nonce)
-  dst.Write(nonce)
+    nonce := make([]byte, streamNonceSize)
+    rand.Read(nonce)
+    dst.Write(nonce)
 
-  return stream.NewWriter(streamKey(fileKey, nonce), dst)
+    return stream.NewWriter(streamKey(fileKey, nonce), dst)
 }
 ```
 
@@ -123,21 +123,20 @@ func Encrypt(dst io.Writer, recipients ...Recipient) (io.WriteCloser, error) {
 
 ```golang
 func (i *X25519Identity) unwrap(block *Stanza) ([]byte, error) {
+    publicKey, err := format.DecodeString(block.Args[0])
 
-  publicKey, err := format.DecodeString(block.Args[0])
+    sharedSecret, err := curve25519.X25519(i.secretKey, publicKey)
 
-  sharedSecret, err := curve25519.X25519(i.secretKey, publicKey)
+    salt := make([]byte, 0, len(publicKey)+len(i.ourPublicKey))
+    salt = append(salt, publicKey...)
+    salt = append(salt, i.ourPublicKey...)
+    h := hkdf.New(sha256.New, sharedSecret, salt, []byte(x25519Label))
+    wrappingKey := make([]byte, chacha20poly1305.KeySize)
+    io.ReadFull(h, wrappingKey)
 
-  salt := make([]byte, 0, len(publicKey)+len(i.ourPublicKey))
-  salt = append(salt, publicKey...)
-  salt = append(salt, i.ourPublicKey...)
-  h := hkdf.New(sha256.New, sharedSecret, salt, []byte(x25519Label))
-  wrappingKey := make([]byte, chacha20poly1305.KeySize)
-  io.ReadFull(h, wrappingKey)
+    fileKey, err := aeadDecrypt(wrappingKey, fileKeySize, block.Body)
 
-  fileKey, err := aeadDecrypt(wrappingKey, fileKeySize, block.Body)
-
-  return fileKey, nil
+    return fileKey, nil
 }
 ```
 
@@ -145,38 +144,37 @@ Decrypt 从 header 的多条 stanza 记录中匹配能够 unwarp 的 stanza, 获
 
 ```golang
 func Decrypt(src io.Reader, identities ...Identity) (io.Reader, error) {
+    hdr, payload, err := format.Parse(src)
 
-  hdr, payload, err := format.Parse(src)
-
-  stanzas := make([]*Stanza, 0, len(hdr.Recipients))
-  for _, s := range hdr.Recipients {
-    stanzas = append(stanzas, (*Stanza)(s))
-  }
-
-  errNoMatch := &NoIdentityMatchError{}
-  var fileKey []byte
-  for _, id := range identities {
-    fileKey, err = id.Unwrap(stanzas)
-    if errors.Is(err, ErrIncorrectIdentity) {
-      errNoMatch.Errors = append(errNoMatch.Errors, err)
-      continue
-    }
-    if err != nil {
-      return nil, err
+    stanzas := make([]*Stanza, 0, len(hdr.Recipients))
+    for _, s := range hdr.Recipients {
+        stanzas = append(stanzas, (*Stanza)(s))
     }
 
-    break
+    errNoMatch := &NoIdentityMatchError{}
+    var fileKey []byte
+    for _, id := range identities {
+        fileKey, err = id.Unwrap(stanzas)
+        if errors.Is(err, ErrIncorrectIdentity) {
+            errNoMatch.Errors = append(errNoMatch.Errors, err)
+            continue
+        }
+        if err != nil {
+            return nil, err
+        }
+
+        break
   }
 
-  if mac, err := headerMAC(fileKey, hdr); err != nil {
-    return nil, fmt.Errorf("failed to compute header MAC: %v", err)
-  } else if !hmac.Equal(mac, hdr.MAC) {
-    return nil, errors.New("bad header MAC")
-  }
+    if mac, err := headerMAC(fileKey, hdr); err != nil {
+        return nil, fmt.Errorf("failed to compute header MAC: %v", err)
+    } else if !hmac.Equal(mac, hdr.MAC) {
+        return nil, errors.New("bad header MAC")
+    }
 
-  nonce := make([]byte, streamNonceSize)
-  io.ReadFull(payload, nonce)
+    nonce := make([]byte, streamNonceSize)
+    io.ReadFull(payload, nonce)
 
-  return stream.NewReader(streamKey(fileKey, nonce), payload)
+    return stream.NewReader(streamKey(fileKey, nonce), payload)
 }
 ```
