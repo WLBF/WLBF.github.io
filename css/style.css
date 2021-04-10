@@ -496,7 +496,7 @@ h6 {
   display: inline-block;
   margin: 0 auto;
   font-weight: 400;
-  font-size: 24px;
+  font-size: 22px;
   color: rgba(0, 0, 0, 0.7); }
 
 #nav-top {
@@ -613,7 +613,7 @@ h6 {
         text-align: left; }
     .post .post-content code, .post .post-content pre {
       padding: 7px;
-      font-size: 13px;
+      font-size: 14px;
       font-family: "Open Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft Yahei", "Microsoft Jhenghei", sans-serif;
       background: #F8F8F8; }
     .post .post-content code {
@@ -631,7 +631,7 @@ h6 {
           right: 0;
           left: 0;
           padding: 2px 7px;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: bold;
           color: #cacaca;
           background: #f0f0f0;
@@ -672,6 +672,10 @@ h6 {
         content: "YAML"; }
       .post .post-content .highlight.stylus > ::after {
         content: "Stylus"; }
+      .post .post-content .highlight.golang > ::after {
+        content: "Go"; }
+      .post .post-content .highlight.rust > ::after {
+        content: "Rust"; }
       .post .post-content .highlight .code pre {
         margin: 0;
         padding: 30px 10px 10px; }
@@ -682,7 +686,7 @@ h6 {
           margin: 0;
           padding: 30px 7px 10px; }
       .post .post-content .highlight .line {
-        height: 20px; }
+        height: 21px; }
       .post .post-content .highlight table, .post .post-content .highlight tr, .post .post-content .highlight td {
         margin: 0;
         padding: 0;
