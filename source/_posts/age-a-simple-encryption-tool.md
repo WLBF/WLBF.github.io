@@ -5,11 +5,11 @@ tags: cryptography
 ---
 ## Introduction
 
-[age](https://github.com/FiloSottile/age) 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法。GitHub 上也已经有了对应的 rust 实现 [str4d/rage](https://github.com/str4d/rage)。非对称加密算法 age 选择了 curve25519 椭圆曲线算法， 对称加密选择了 chacha20poly1305 作为 aead 算法。
+[age](https://github.com/FiloSottile/age) 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。。GitHub 上也已经有了对应的 rust 实现 [str4d/rage](https://github.com/str4d/rage)。
 
 ## Usage
 
-age 的使用非常简单。通常情况下 `curve25519` 曲线的公私钥二进制长度均为 32 个字节，在这里公私钥编码方式选择源自 Bitcoin 的 bech32。
+age 的使用非常简单。通常情况下 x25519 曲线的公私钥二进制长度均为 32 个字节，在这里公私钥编码方式选择源自 Bitcoin 的 bech32。
 
 ```plaintext
 ➜  age git:(master) ✗ ./age-keygen 
@@ -23,7 +23,7 @@ AGE-SECRET-KEY-1Q4GC3VNU9HSKFFTJ5UTTDUXQGH9X6UQ0E3W53WT70QQLF57QR5RQF5CG53
 
 ### ECDHE
 
-ECDH 是一种利用椭圆曲线离散对数难题设计的密钥共享算法。可以简单描述为以下形式，a 和 b 为 alice 和 bob 的私钥，一般是两个随机数， a 和 b 分别与同一个基点 G 做乘法得到各自的公钥， 由于离散对数难题，傍观者无法通过公钥 A 和基点 G 计算出私钥。alice 和 bob 只需要使用自己的私钥和对方的公钥做乘法，即可得到双方共享的密钥。私钥可以选择临时生成，因为可能在完成了密钥交换之后，私钥就可能不再需要使用，即最后一个字母 E 代表的 ephemeral。
+ECDH 是一种利用椭圆曲线离散对数难题设计的密钥共享算法。可以简单描述为以下形式，a 和 b 为 alice 和 bob 的私钥，一般是两个随机数， a 和 b 分别与同一个基点 G 做乘法得到各自的公钥， 由于离散对数难题，傍观者无法通过公钥 A 和基点 G 计算出私钥。alice 和 bob 只需要使用自己的私钥和对方的公钥做乘法，即可得到双方共享的密钥。私钥可以选择临时生成，因为可能在完成了密钥交换之后，私钥就可能不再需要使用，ECDHE 最后一个字母 E 代表 ephemeral。
 
 ```plaintext
 alice: A = aG
@@ -50,7 +50,7 @@ sharedSecret2, err := curve25519.X25519(ephemeralB, publicKeyA)
 
 ## Encryption
 
-p.s. 截取代码删去了所有错误处理和一些检查
+p.s. 截取代码删去了一些错误处理和检查
 
 Wrap 函数的参数 fileKey 是实际上用来加密文本的密钥，Wrap 首先通过前文提到的 ECDHE 算法计算出 sharedSecret。之后对 sharedSecret 进行加盐 hkdf 操作，生成用于 aead 加密的 wrappingKey，使用 wrappingKey 对 fileKey 进行加密。注意这里的 aead 并没有是用随机生成的 nonce,而是使用了全部字节为 0 的固定 nonce, 原因是在这里加密的密钥是是一次性的，没有必要再使用随机 nonce。
 
