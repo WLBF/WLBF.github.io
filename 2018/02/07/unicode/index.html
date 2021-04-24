@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Unicode">
+
+
+
+
+  <meta name="keywords" content="encoding,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2018/02/07/unicode/">
+
+
+<meta name="description" content="整理一下关于编码的知识写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。 字符集为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。 编码方式将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指">
+<meta name="keywords" content="encoding">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unicode">
+<meta property="og:url" content="http://yoursite.com/2018/02/07/unicode/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="整理一下关于编码的知识写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。 字符集为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。 编码方式将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-04-24T13:39:22.255Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Unicode">
+<meta name="twitter:description" content="整理一下关于编码的知识写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。 字符集为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。 编码方式将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Unicode - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Unicode
+        
+      </h1>
+
+      <time class="post-time">
+          Feb 07 2018
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="整理一下关于编码的知识"><a href="#整理一下关于编码的知识" class="headerlink" title="整理一下关于编码的知识"></a>整理一下关于编码的知识</h2><p>写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。</p>
+<h2 id="字符集"><a href="#字符集" class="headerlink" title="字符集"></a>字符集</h2><p>为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。</p>
+<h2 id="编码方式"><a href="#编码方式" class="headerlink" title="编码方式"></a>编码方式</h2><p>将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指的都是编码规则。</p>
+<h3 id="UTF-8"><a href="#UTF-8" class="headerlink" title="UTF-8"></a>UTF-8</h3><p>UTF-8 指的是编码单元为一个字节的一种变长编码规则，一个字符编码为1至4个字节。具体编码规则参考 wiki：</p>
+<p><a href="https://en.wikipedia.org/wiki/UTF-8" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/UTF-8</a></p>
+<p>一个实现了 UTF-8 encoding 的 Json 解析器教学项目：</p>
+<p><a href="https://github.com/WLBF/json-tutorial" target="_blank" rel="noopener">https://github.com/WLBF/json-tutorial</a></p>
+<p>流行的主要原因：</p>
+<ul>
+<li>它采用字节为编码单元，没有字节序（endianness）的问题</li>
+<li>节省空间 ASCII 字符只需要一个字节存储，某些字符相比于 UTF-16 能节省一个字节</li>
+<li>由于 ASCII 字符的编码方式和原来相同，原有程序很容易兼容</li>
+</ul>
+<h3 id="UTF-16"><a href="#UTF-16" class="headerlink" title="UTF-16"></a>UTF-16</h3><p>UTF-16 的编码单元为两个字节，也是变长编码规则，一个字符编码为2或4个字节。或具体编码规则参考 wiki：</p>
+<p><a href="https://en.wikipedia.org/wiki/UTF-16" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/UTF-16</a></p>
+<p>0至0xFFFF的 code point ，按照 UTF-16 编码后数值上是相同的，这些 code point 称为 BMP（basic multilingual plane）。编码0x10000至0x10FFFF的 code point 会使用代理对（surrogate pairs）。UTF-16，代理对， UCS-2 的关系参考 wiki 的说明。可以看出UTF-16 即使存储 ASCII 字符也需要2字节，超出 BMP 的字符都需要编码成4个字节，相比 UTF-8 更浪费空间。由于编码单元是2字节，还会出现字节序的问题。</p>
+<h3 id="UTF-32"><a href="#UTF-32" class="headerlink" title="UTF-32"></a>UTF-32</h3><p>UTF-32 是定长编码规则，类似 UTF-16 中处理 BMP 的方式，4个字节的编码单元已经足够表示所有 code point，不需要再做什么转换。同样也有字节序的问题。</p>
+<h2 id="Windows-的编码"><a href="#Windows-的编码" class="headerlink" title="Windows 的编码"></a>Windows 的编码</h2><p>在 Windows 系统上存在 code page 这个东西，涉及到一些历史因素。code page 可以认为等同于编码方式。很多 Win32 API 都存在 <code>A</code> 和 <code>W</code> 两个版本，<code>A</code> 版本的 API 系统当前的 code page 来处理文本参数。而 <code>W</code> 的版本是基于 Unicode 来处理文本参数，使用 UTF-16 编码处理文本。</p>
+<p>例子：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdafx.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdio.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">wchar_t</span> dog[] = <span class="string">L"子龙🐶"</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> x : dog)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%04x\n"</span>, x);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">5b50</span><br><span class="line">9f99</span><br><span class="line">d83d</span><br><span class="line">dc36</span><br><span class="line">0000</span><br></pre></td></tr></table></figure>
+<p>可以看出 <code>wchar_t</code> 数组中存储的文本是以 UTF-16 来编码的。其中值得注意的是 <code>🐶</code> 这个字符不在 BMP 之内，采用了代理对编码为 <code>d83d dc36</code> ， 还有就是在 FFI 的时候要注意字符串末尾的 <code>0</code> 。在 Windows 2000 之前 <code>W</code> 的版本的 API 只支持 BMP， 之后才开始支持代理对。</p>
+<p>详细参考 MSDN ：</p>
+<p><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd317752.aspx" target="_blank" rel="noopener">Code Pages</a></p>
+<p><a href="https://msdn.microsoft.com/en-us/library/ff381407.aspx" target="_blank" rel="noopener">Working with Strings</a></p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/encoding/">encoding</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2018/03/12/windows-manifest/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Windows Manifest</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2017/04/30/string-match/">
+        <span class="next-text nav-default">String Match</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

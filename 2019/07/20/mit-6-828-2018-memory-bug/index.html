@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="MIT-6.828 2018 Memory Bug">
+
+
+
+
+  <meta name="keywords" content="os,debug,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2019/07/20/mit-6-828-2018-memory-bug/">
+
+
+<meta name="description" content="在学习 mit-6.828-2018 lab3 的时候遇到了一个很奇怪的问题。lab3 分支 merge 之前已经完成的 lab2 分支后会在某一处 painc。在简单来说 lab3 分支原代码基础上增加一些完全正确的代码，会导致 kernel panic。通过 debug 发现问题出在下面这里： 12345678910111213141516171819// Find out how much">
+<meta name="keywords" content="os,debug">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT-6.828 2018 Memory Bug">
+<meta property="og:url" content="http://yoursite.com/2019/07/20/mit-6-828-2018-memory-bug/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="在学习 mit-6.828-2018 lab3 的时候遇到了一个很奇怪的问题。lab3 分支 merge 之前已经完成的 lab2 分支后会在某一处 painc。在简单来说 lab3 分支原代码基础上增加一些完全正确的代码，会导致 kernel panic。通过 debug 发现问题出在下面这里： 12345678910111213141516171819// Find out how much">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-04-24T13:39:22.255Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MIT-6.828 2018 Memory Bug">
+<meta name="twitter:description" content="在学习 mit-6.828-2018 lab3 的时候遇到了一个很奇怪的问题。lab3 分支 merge 之前已经完成的 lab2 分支后会在某一处 painc。在简单来说 lab3 分支原代码基础上增加一些完全正确的代码，会导致 kernel panic。通过 debug 发现问题出在下面这里： 12345678910111213141516171819// Find out how much">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> MIT-6.828 2018 Memory Bug - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          MIT-6.828 2018 Memory Bug
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 20 2019
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>在学习 mit-6.828-2018 lab3 的时候遇到了一个很奇怪的问题。lab3 分支 merge 之前已经完成的 lab2 分支后会在某一处 painc。在简单来说 lab3 分支原代码基础上增加一些完全正确的代码，会导致 kernel panic。通过 debug 发现问题出在下面这里：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Find out how much memory the machine has (npages &amp; npages_basemem).</span></span><br><span class="line">i386_detect_memory();</span><br><span class="line"></span><br><span class="line"><span class="comment">//////////////////////////////////////////////////////////////////////</span></span><br><span class="line"><span class="comment">// create initial page directory.</span></span><br><span class="line">kern_pgdir = (<span class="keyword">pde_t</span> *) boot_alloc(PGSIZE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// kern_pgdir = 0xf018e000</span></span><br><span class="line"><span class="built_in">memset</span>(kern_pgdir, <span class="number">0</span>, PGSIZE); <span class="comment">// &lt;--- kern_pgdir is set to 0x0 in here.</span></span><br><span class="line"><span class="comment">// kern_pgdir = 0x0</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//////////////////////////////////////////////////////////////////////</span></span><br><span class="line"><span class="comment">// Recursively insert PD in itself as a page table, to form</span></span><br><span class="line"><span class="comment">// a virtual page table at virtual address UVPT.</span></span><br><span class="line"><span class="comment">// (For now, you don't have understand the greater purpose of the</span></span><br><span class="line"><span class="comment">// following line.)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Permissions: kernel R, user R</span></span><br><span class="line">kern_pgdir[PDX(UVPT)] = PADDR(kern_pgdir) | PTE_U | PTE_P</span><br></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p kern_pgdir</span><br><span class="line"><span class="variable">$1</span> = 0xf018e000</span><br><span class="line">(gdb) p &amp;kern_pgdir</span><br><span class="line"><span class="variable">$1</span> = 0xf018e00c</span><br></pre></td></tr></table></figure>
+<p>通过 debug 可以发现 memset 将 <code>kern_pgdir</code> 自己给覆盖掉了。那么说明 <code>boot_alloc</code> 分配的地址是有问题的，下面看看 <code>boot_alloc</code> 的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This simple physical memory allocator is used only while JOS is setting</span></span><br><span class="line"><span class="comment">// up its virtual memory system.  page_alloc() is the real allocator.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// If n&gt;0, allocates enough pages of contiguous physical memory to hold 'n'</span></span><br><span class="line"><span class="comment">// bytes.  Doesn't initialize the memory.  Returns a kernel virtual address.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// If n==0, returns the address of the next free page without allocating</span></span><br><span class="line"><span class="comment">// anything.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// If we're out of memory, boot_alloc should panic.</span></span><br><span class="line"><span class="comment">// This function may ONLY be used during initialization,</span></span><br><span class="line"><span class="comment">// before the page_free_list list has been set up.</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *</span><br><span class="line">boot_alloc(<span class="keyword">uint32_t</span> n)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">char</span> *nextfree;  <span class="comment">// virtual address of next byte of free memory</span></span><br><span class="line">    <span class="keyword">char</span> *result;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Initialize nextfree if this is the first time.</span></span><br><span class="line">    <span class="comment">// 'end' is a magic symbol automatically generated by the linker,</span></span><br><span class="line">    <span class="comment">// which points to the end of the kernel's bss segment:</span></span><br><span class="line">    <span class="comment">// the first virtual address that the linker did *not* assign</span></span><br><span class="line">    <span class="comment">// to any kernel code or global variables.</span></span><br><span class="line">    <span class="keyword">if</span> (!nextfree) &#123;</span><br><span class="line">        <span class="keyword">extern</span> <span class="keyword">char</span> end[];</span><br><span class="line">        nextfree = ROUNDUP((<span class="keyword">char</span> *) end, PGSIZE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Allocate a chunk large enough to hold 'n' bytes, then update</span></span><br><span class="line">    <span class="comment">// nextfree.  Make sure nextfree is kept aligned</span></span><br><span class="line">    <span class="comment">// to a multiple of PGSIZE.</span></span><br><span class="line">    result = nextfree;</span><br><span class="line">    nextfree += ROUNDUP(n, PGSIZE);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">void</span> *)result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内核刚开始运行时会使用 <code>boot_alloc</code> 来分配内存，<code>boot_alloc</code> 返回的内存地址应当是空闲的。而事实上第一次调用 <code>boot_alloc</code> 返回的地址 <code>0xf018e000</code> 竟然小于静态变量 <code>kern_pgdir</code> 的地址 <code>0xf018e00c</code> 。这才导致后续调用 <code>memset</code> 时 <code>kern_pgdir</code> 自身被覆盖。观察 <code>boot_alloc</code> 代码会发现，第一次分配内存时，空闲内存地址来自于 <code>end</code> 这个符号， 像注释中说的那样， <code>end</code> 的地址应该位于整个内核的末尾，即 bss section 的末尾，用来指示内核之后的空闲内存地址。但事实上却不是这样，可以通过 objdump kernel 来确认我们 debug 时发现的问题。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">@: objdump -D obj/kern/kernel</span><br><span class="line">...</span><br><span class="line">Disassembly of section .bss:</span><br><span class="line">...</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">f018e000 &lt;end&gt;:</span><br><span class="line">f018e000:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f018e004 &lt;panicstr&gt;:</span><br><span class="line">f018e004:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f018e008 &lt;npages&gt;:</span><br><span class="line">f018e008:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f018e00c &lt;kern_pgdir&gt;:</span><br><span class="line">f018e00c:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f018e010 &lt;pages&gt;:</span><br><span class="line">f018e010:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>link script:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">  .bss : &#123;</span><br><span class="line">    PROVIDE(edata = .);</span><br><span class="line">    *(.bss)</span><br><span class="line">    PROVIDE(end = .);</span><br><span class="line">    BYTE(0)</span><br><span class="line">  &#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<p>很明显 <code>end</code> 在 bss section 中的位置是有问题的，而 <code>end</code> 实际上是在 link script 中提供的。也就是说链接过程中 <code>end</code> 没有出现在预计的位置。时间关系，我没有探究更深入的原因。令我好奇的是我没有改动过 link script, 编译工具链也与之前一致，为什么这个问题单单在 lab3 merge 完代码后才会出现。通过 objdump 我观察了 lab1 lab2 以及 origin lab3 分支编译后的 bss section 信息，发现所有的 bss section 中 <code>end</code> 都不在末尾位置，现象和出问题的时候一致，那么为什么之前就没问题？</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">@: objdump -D obj/kern/kernel</span><br><span class="line">...</span><br><span class="line">Disassembly of section .bss:</span><br><span class="line">...</span><br><span class="line">...</span><br><span class="line">f017cfe0 &lt;end&gt;:</span><br><span class="line">f017cfe0:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f017cfe4 &lt;panicstr&gt;:</span><br><span class="line">f017cfe4:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f017cfe8 &lt;npages&gt;:</span><br><span class="line">f017cfe8:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f017cfec &lt;kern_pgdir&gt;:</span><br><span class="line">f017cfec:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">f017cff0 &lt;pages&gt;:</span><br><span class="line">f017cff0:	00 00                	add    %al,(%eax)</span><br><span class="line">  ...</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>细心观察 <code>boot_alloc</code> 的代码就会发现， 为了保持内存对齐，<code>end</code> 实际上是被 round up 到了 page size 的整数倍大小，之前运行正常实际上是因为 end 被 round up 到了更高的内存地址上，以上面情况为例，<code>boot_alloc</code> 实际上会从 <code>ROUNDUP((char *) end)</code> 即 <code>0xf017d000</code> 开始分配内存，避开了 <code>end</code> 之后的 bss section 中变量的内存地址。而我会遇到问题是因为改动了代码之后，text section 大小发生了改变，bss section 中变量的地址也随之变化，<code>end</code> 的地址非常巧合地被分配为 <code>0xf018e000</code> ,这个地址正好是 page size 的整数倍，round up 之后并不会变为更高的地址，导致分配内存时覆盖了后续 bss section 中的变量。到这里算是把问题大概搞清楚了。<br>我还发现了一个官方的 commit：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">commit a56269d4beefc7d0b3672180aa46c654cfb63af4 (mitedu/lab1)</span><br><span class="line">Author: Jonathan Behrens &lt;fintelia@gmail.com&gt;</span><br><span class="line">Date:   Tue Sep 4 14:10:42 2018 -0400</span><br><span class="line"></span><br><span class="line">    Tweak kernel.ld linker script so edata and end are set correctly</span><br><span class="line">    </span><br><span class="line">    This change should hopefully resolve issues when compiling with newer versions</span><br><span class="line">    of GCC.</span><br></pre></td></tr></table></figure>
+<p>看来如何在链接过程中，提供 end 这个 magic symbol 可能是一件比较麻烦的事。我遇到问题的的环境是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Ubuntu-18.04</span><br><span class="line">gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0</span><br><span class="line">GNU ld (GNU Binutils for Ubuntu) 2.30</span><br></pre></td></tr></table></figure>
+<p>最后我的解决方案是装了个 gcc-4.8，编译之后，bss 中变量地址和 gcc-7.4 编译出来的不同，只要 end 地址不是 page size 的整数倍，bss section 没有那么大， end 经过 round up 之后落到了更高的空闲内存上，就又可以愉快地做作业了。（假装问题已经解决了）</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/os/">os</a>
+		  
+			<a href="/tags/debug/">debug</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2021/04/10/age-a-simple-encryption-tool/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">age - A simple encryption tool</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2019/07/08/elliptic-curve-cryptography/">
+        <span class="next-text nav-default">Elliptic Curve Cryptography</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>

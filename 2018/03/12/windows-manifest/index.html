@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Windows Manifest">
+
+
+
+
+  <meta name="keywords" content="日常,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2018/03/12/windows-manifest/">
+
+
+<meta name="description" content="最近用 rust 在 windows 上写安装程序，碰到了 PCA(Program Compatibility Assistant) 的问题，安装卸载的时候总是弹窗。msdn 上的有关 PCA 的文档写得不是很详细。后来对比了一下其他的安装程序发现问题出在 manifest 上，在 manifest 中加上 compatibility 字段就解决了。后来发现有个 stackoverflow 问题提">
+<meta name="keywords" content="日常">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows Manifest">
+<meta property="og:url" content="http://yoursite.com/2018/03/12/windows-manifest/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="最近用 rust 在 windows 上写安装程序，碰到了 PCA(Program Compatibility Assistant) 的问题，安装卸载的时候总是弹窗。msdn 上的有关 PCA 的文档写得不是很详细。后来对比了一下其他的安装程序发现问题出在 manifest 上，在 manifest 中加上 compatibility 字段就解决了。后来发现有个 stackoverflow 问题提">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-04-24T13:39:22.255Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Windows Manifest">
+<meta name="twitter:description" content="最近用 rust 在 windows 上写安装程序，碰到了 PCA(Program Compatibility Assistant) 的问题，安装卸载的时候总是弹窗。msdn 上的有关 PCA 的文档写得不是很详细。后来对比了一下其他的安装程序发现问题出在 manifest 上，在 manifest 中加上 compatibility 字段就解决了。后来发现有个 stackoverflow 问题提">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Windows Manifest - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Windows Manifest
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 12 2018
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>最近用 rust 在 windows 上写安装程序，碰到了 PCA(Program Compatibility Assistant) 的问题，安装卸载的时候总是弹窗。msdn 上的有关 PCA 的文档写得不是很详细。后来对比了一下其他的安装程序发现问题出在 manifest 上，在 manifest 中加上 compatibility 字段就解决了。后来发现有个 stackoverflow 问题提到了这个解决方法，可惜没有早点搜到。最后 manifest 长这样：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">assembly</span> <span class="attr">xmlns</span>=<span class="string">"urn:schemas-microsoft-com:asm.v1"</span> <span class="attr">manifestVersion</span>=<span class="string">"1.0"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">assemblyIdentity</span> <span class="attr">version</span>=<span class="string">"1.0.0.0"</span> <span class="attr">name</span>=<span class="string">"MyApplication.app"</span>/&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">trustInfo</span> <span class="attr">xmlns</span>=<span class="string">"urn:schemas-microsoft-com:asm.v2"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">security</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">requestedPrivileges</span> <span class="attr">xmlns</span>=<span class="string">"urn:schemas-microsoft-com:asm.v3"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">requestedExecutionLevel</span> <span class="attr">level</span>=<span class="string">"requireAdministrator"</span> <span class="attr">uiAccess</span>=<span class="string">"false"</span> /&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">requestedPrivileges</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">security</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">trustInfo</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">compatibility</span> <span class="attr">xmlns</span>=<span class="string">"urn:schemas-microsoft-com:compatibility.v1"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">supportedOS</span> <span class="attr">Id</span>=<span class="string">"&#123;8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a&#125;"</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">supportedOS</span> <span class="attr">Id</span>=<span class="string">"&#123;35138b9a-5d96-4fbd-8e2d-a2440225f93a&#125;"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">compatibility</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">assembly</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>一些参考文档：<br><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa375365.aspx" target="_blank" rel="noopener">Manifests</a><br><a href="https://msdn.microsoft.com/en-us/library/bb756937.aspx" target="_blank" rel="noopener">Application Compatibility: Program Compatibility Assistant (PCA)</a><br><a href="https://stackoverflow.com/questions/5098747/reasons-for-getting-the-program-compatibility-assistant-dialog" target="_blank" rel="noopener">Reasons for getting the Program Compatibility Assistant dialog?</a></p>
+<p>还有一个需要解决的问题是 rustc 并不支持将 manifest 编译进 exe, 参考:</p>
+<p><a href="https://github.com/rust-lang/rfcs/issues/721" target="_blank" rel="noopener">https://github.com/rust-lang/rfcs/issues/721</a></p>
+<p>原本 msvc 是将 manifest 当做 rc 编译链接的，rustc 还没做这个功能，absolutely zero progress……，只能参考这个：<br><a href="https://stackoverflow.com/questions/1423492/how-do-i-add-a-manifest-to-an-executable-using-mt-exe" target="_blank" rel="noopener">How do I add a manifest to an executable using mt.exe?</a></p>
+<p>用 win10 sdk 里的 mt.exe 把 manifest 塞进编好的 exe 中，在 CI 里加上一行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mt.exe -nologo -manifest &quot;c:\project\setup.exe.manifest&quot; -outputresource:&quot;c:\project\setup.exe;#1&quot;</span><br></pre></td></tr></table></figure>
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/日常/">日常</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2018/03/18/which-rs/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Rust Which</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2018/02/07/unicode/">
+        <span class="next-text nav-default">Unicode</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
