@@ -43,7 +43,7 @@
 <meta property="og:site_name" content="WLBF">
 <meta property="og:description" content="整理一下关于编码的知识写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。 字符集为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。 编码方式将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-04-19T13:58:33.429Z">
+<meta property="og:updated_time" content="2021-04-24T12:48:13.757Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Unicode">
 <meta name="twitter:description" content="整理一下关于编码的知识写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。 字符集为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。 编码方式将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指">
@@ -130,7 +130,7 @@
 
     
             <div class="post-content">
-            <h1 id="整理一下关于编码的知识"><a href="#整理一下关于编码的知识" class="headerlink" title="整理一下关于编码的知识"></a>整理一下关于编码的知识</h1><p>写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。</p>
+            <h2 id="整理一下关于编码的知识"><a href="#整理一下关于编码的知识" class="headerlink" title="整理一下关于编码的知识"></a>整理一下关于编码的知识</h2><p>写 Windows 客户端难免碰到蛋疼的编码问题。用 Rust ffi 的时候，也涉及到了编码转换的问题。于是就整理了一些关于编码的知识。如有错漏，欢迎指正。</p>
 <h2 id="字符集"><a href="#字符集" class="headerlink" title="字符集"></a>字符集</h2><p>为每一个字符分配一个唯一的数字编号（码点 / code point），当前范围是 0 至 0x10FFFF 。</p>
 <h2 id="编码方式"><a href="#编码方式" class="headerlink" title="编码方式"></a>编码方式</h2><p>将 code point 转换为字节序列的规则。UTF-8，UTF-16, UTF-32 指的都是编码规则。</p>
 <h3 id="UTF-8"><a href="#UTF-8" class="headerlink" title="UTF-8"></a>UTF-8</h3><p>UTF-8 指的是编码单元为一个字节的一种变长编码规则，一个字符编码为1至4个字节。具体编码规则参考 wiki：</p>
@@ -181,8 +181,8 @@
       </a>
     
     
-      <a class="next" href="/2018/02/03/single-instance/">
-        <span class="next-text nav-default">Single Instance</span>
+      <a class="next" href="/2017/04/30/string-match/">
+        <span class="next-text nav-default">String Match</span>
         <span class="prev-text nav-mobile">Next</span>
         <i class="iconfont icon-right"></i>
       </a>

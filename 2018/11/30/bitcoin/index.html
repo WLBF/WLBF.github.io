@@ -43,15 +43,15 @@
 <meta property="og:site_name" content="WLBF">
 <meta property="og:description" content="TransactionsWe define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/transactions.svg">
-<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/statetransition.png">
-<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/block.png">
-<meta property="og:image" content="http://yoursite.com/2018/11/30/bitcoin/merkle-tree.svg">
-<meta property="og:updated_time" content="2019-04-19T13:58:33.425Z">
+<meta property="og:image" content="https://i.imgur.com/qUg214v.png">
+<meta property="og:image" content="https://i.imgur.com/2MSHUcX.png">
+<meta property="og:image" content="https://i.imgur.com/oH9PhuU.png">
+<meta property="og:image" content="https://i.imgur.com/bFng4Fa.png">
+<meta property="og:updated_time" content="2021-04-24T13:15:48.048Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Bitcoin">
 <meta name="twitter:description" content="TransactionsWe define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction">
-<meta name="twitter:image" content="http://yoursite.com/2018/11/30/bitcoin/transactions.svg">
+<meta name="twitter:image" content="https://i.imgur.com/qUg214v.png">
 
 
 <link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
@@ -136,9 +136,9 @@
     
             <div class="post-content">
             <h2 id="Transactions"><a href="#Transactions" class="headerlink" title="Transactions"></a>Transactions</h2><p>We define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction is to be aware of all transactions.</p>
-<div align="center"><br>    <img src="transactions.svg" width="80%" height="80%"><br></div>
+<div align="center"><br>    <img src="https://i.imgur.com/qUg214v.png" width="80%" height="80%"><br></div>
 
-<h2 id="Bitcoin-As-A-State-Transition-System"><a href="#Bitcoin-As-A-State-Transition-System" class="headerlink" title="Bitcoin As A State Transition System"></a>Bitcoin As A State Transition System</h2><div align="center"><br>    <img src="statetransition.png" width="80%" height="80%"><br></div>
+<h2 id="Bitcoin-As-A-State-Transition-System"><a href="#Bitcoin-As-A-State-Transition-System" class="headerlink" title="Bitcoin As A State Transition System"></a>Bitcoin As A State Transition System</h2><div align="center"><br>    <img src="https://i.imgur.com/2MSHUcX.png" width="80%" height="80%"><br></div>
 
 <p>The ledger of a cryptocurrency such as Bitcoin can be thought of as a state transition system. The “state” in Bitcoin is the collection of all coins (technically, “unspent transaction outputs” or UTXO) that have been mined and not yet spent, with each UTXO having a denomination and an owner (defined by a 20-byte address which is essentially a cryptographic public key). A transaction contains one or more inputs, with each input containing a reference to an existing UTXO and a cryptographic signature produced by the private key associated with the owner’s address, and one or more outputs, with each output containing a new UTXO to be added to the state. The state transition function <code>APPLY(S,TX) -&gt; S&#39; or ERROR</code> can be defined roughly as follows:</p>
 <ol>
@@ -150,7 +150,7 @@
 <li>If the sum of the denominations of all input UTXO is less than the sum of the denominations of all output UTXO, return an error.</li>
 <li>Return S’ with all input UTXO removed and all output UTXO added.</li>
 </ol>
-<h2 id="Proof-of-Work"><a href="#Proof-of-Work" class="headerlink" title="Proof-of-Work"></a>Proof-of-Work</h2><div align="center"><br>    <img src="block.png" width="80%" height="80%"><br></div>
+<h2 id="Proof-of-Work"><a href="#Proof-of-Work" class="headerlink" title="Proof-of-Work"></a>Proof-of-Work</h2><div align="center"><br>    <img src="https://i.imgur.com/oH9PhuU.png" width="80%" height="80%"><br></div>
 
 <p> Bitcoin’s decentralized consensus process requires nodes in the network to continuously attempt to produce packages of transactions called “blocks”. The network is intended to produce roughly one block every ten minutes.</p>
 <p>The algorithm for checking if a block is valid, expressed in this paradigm, is as follows:</p>
@@ -167,7 +167,7 @@
 <p>To compensate for increasing hardware speed and varying interest in running nodes over time, the proof-of-work difficulty is determined by a moving average targeting an average number of blocks per hour. If they’re generated too fast, the difficulty increases.</p>
 <h2 id="Incentive"><a href="#Incentive" class="headerlink" title="Incentive"></a>Incentive</h2><p>Whenever a miner mines a block, it includes a special transaction called a coinbase transaction. This transaction has no inputs and creates X bitcoins equal to the current block reward which are awarded to the miner of the block. Additionally, if any transaction has a higher total denomination in its inputs than in its outputs, the difference also goes to the miner as a “transaction fee”.</p>
 <h2 id="Merkle-Tree"><a href="#Merkle-Tree" class="headerlink" title="Merkle Tree"></a>Merkle Tree</h2><p>Transactions are hashed in a Merkle Tree, with only the root included in the block’s hash.</p>
-<div align="center"><br>    <img src="merkle-tree.svg" width="50%" height="50%"><br></div>
+<div align="center"><br>    <img src="https://i.imgur.com/bFng4Fa.png" width="50%" height="50%"><br></div>
 
 <p>Resources:<br><a href="https://bitcoin.org/bitcoin.pdf" target="_blank" rel="noopener">https://bitcoin.org/bitcoin.pdf</a><br><a href="https://github.com/ethereum/wiki/wiki/White-Paper#bitcoin-as-a-state-transition-system" target="_blank" rel="noopener">https://github.com/ethereum/wiki/wiki/White-Paper#bitcoin-as-a-state-transition-system</a><br><a href="https://github.com/paritytech/parity-bitcoin" target="_blank" rel="noopener">https://github.com/paritytech/parity-bitcoin</a><br><a href="https://github.com/bitcoinbook/bitcoinbook" target="_blank" rel="noopener">https://github.com/bitcoinbook/bitcoinbook</a></p>
 
