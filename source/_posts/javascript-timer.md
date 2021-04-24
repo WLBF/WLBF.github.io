@@ -16,7 +16,7 @@ tag: JavaScript
 `clearInterval(id);, clearTimeout(id);`
 接收一个（由上文涉及的两个函数返回）ID，且终止定时器回调函数的的调用。
 为了理解定时器的工作原理，需要明确一个重要的概念。从定时器被设置到回调函数执行，中间的时间间隔并不一定等于我们设置的delay。因为在浏览器中所有单线程异步事件（比如鼠标点击和计时器），只有在线程空闲时才能执行。如下图所示：
-![js-timer](https://sfault-image.b0.upaiyun.com/293/493/2934936595-5518deef7df05_articlex)
+![js-timer](https://i.imgur.com/XTT2kBj.png)
 这张图是一维的，垂直方向是时间轴，以毫秒计。蓝色方块代表被执行的JavaScript代码片段。例如第一段代码执行了18ms，鼠标点击事件执行11ms，以此类推。
 由于JavaScript线程一次只能执行一段代码（由单线程特性决定），所以上图中的每一个代码块都阻塞了其他异步事件的执行。这意味着当异步事件发生时（例如鼠标点击、计时器触发、或者XMLHttpRequest完成）这些事件将被加入队列等待稍后执行（不同的浏览器组织这些队列的方式各不相同，本文所使用的是一个简化的模型）。
 一开始，在第一段代码执行过程中，两个定时器被设置：一个间隔为10ms的setTimeout（即图中Timer starts）和一个间隔为10ms的setInterval。然而从setTimeout设置算起10ms之后setTimeout事件触发，此时第一段代码还没有执行完。所以setTimeout的回调函数不能立即得到执行（由于单线程而无法执行），于是将这个回调函数加入队列，等待以后线程空闲时执行。
@@ -29,6 +29,7 @@ tag: JavaScript
 
 最终，当第二个Interval回调函数完成执行的时候，我们可以看到javascript引擎已经没有什么需要执行了。这意味着，浏览器现在正在等待一个新的异步事件的发生。我们可以看到在50ms的时候，Interval回调函数再一次被触发。然而，这一次没有其他代码阻塞它的执行了，Interval回调函数立刻得到了执行。
 让我们看一个例子来更好地阐述setTimeout 和setInterval的区别。
+
 ``` javascript
 setTimeout(function(){
     /* Some long block of code... */
@@ -39,6 +40,7 @@ setTimeout(function(){
     /* Some long block of code... */
   }, 10);
 ```
+
 第一眼看上去这两段代码在功能上是等价的，但事实上却不是。值得注意的是，setTimeout 这段代码会在每次回调函数执行之后至少延时10ms再去执行下一次（可能延迟更多，但不会少）。但是setInterval会每隔10ms就去尝试执行回调函数，不管上一个回调函数是否已经执行完了。
 
 概括一下可以得出：

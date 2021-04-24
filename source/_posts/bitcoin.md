@@ -8,13 +8,13 @@ tags: blockchain
 We define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction is to be aware of all transactions.
 
 <div align="center">
-    <img src="transactions.svg" width="80%" height="80%">
+    <img src="https://i.imgur.com/qUg214v.png" width="80%" height="80%">
 </div>
 
 ## Bitcoin As A State Transition System
 
 <div align="center">
-    <img src="statetransition.png" width="80%" height="80%">
+    <img src="https://i.imgur.com/2MSHUcX.png" width="80%" height="80%">
 </div>
 
 The ledger of a cryptocurrency such as Bitcoin can be thought of as a state transition system. The "state" in Bitcoin is the collection of all coins (technically, "unspent transaction outputs" or UTXO) that have been mined and not yet spent, with each UTXO having a denomination and an owner (defined by a 20-byte address which is essentially a cryptographic public key). A transaction contains one or more inputs, with each input containing a reference to an existing UTXO and a cryptographic signature produced by the private key associated with the owner's address, and one or more outputs, with each output containing a new UTXO to be added to the state. The state transition function `APPLY(S,TX) -> S' or ERROR` can be defined roughly as follows:
@@ -28,7 +28,7 @@ The ledger of a cryptocurrency such as Bitcoin can be thought of as a state tran
 ## Proof-of-Work
 
 <div align="center">
-    <img src="block.png" width="80%" height="80%">
+    <img src="https://i.imgur.com/oH9PhuU.png" width="80%" height="80%">
 </div>
 
  Bitcoin's decentralized consensus process requires nodes in the network to continuously attempt to produce packages of transactions called "blocks". The network is intended to produce roughly one block every ten minutes.
@@ -56,7 +56,7 @@ Whenever a miner mines a block, it includes a special transaction called a coinb
 Transactions are hashed in a Merkle Tree, with only the root included in the block's hash.
 
 <div align="center">
-    <img src="merkle-tree.svg" width="50%" height="50%">
+    <img src="https://i.imgur.com/bFng4Fa.png" width="50%" height="50%">
 </div>
 
 Resources:
