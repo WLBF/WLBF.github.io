@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Xv6 Buffer Cache">
+
+
+
+
+  <meta name="keywords" content="os,xv6,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/04/28/xv6-buffer-cache/">
+
+
+<meta name="description" content="buffer cache 是文件系统中最接近磁盘的一层抽象，在 6.S081 课程中实现了基于 lru 策略的 buffer cache，在这里做一个总结。  xv6 文件系统中的 buffer cache基本实现xv6 文件系统中的 buffer cache 使用的是最朴素双向链表实现，需要自己维护双向链表， buf 数据结构中有 prev next 两个指针成员变量用来实现双向链表， bcac">
+<meta name="keywords" content="os,xv6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Xv6 Buffer Cache">
+<meta property="og:url" content="http://yoursite.com/2021/04/28/xv6-buffer-cache/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="buffer cache 是文件系统中最接近磁盘的一层抽象，在 6.S081 课程中实现了基于 lru 策略的 buffer cache，在这里做一个总结。  xv6 文件系统中的 buffer cache基本实现xv6 文件系统中的 buffer cache 使用的是最朴素双向链表实现，需要自己维护双向链表， buf 数据结构中有 prev next 两个指针成员变量用来实现双向链表， bcac">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-05-25T05:36:33.043Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Xv6 Buffer Cache">
+<meta name="twitter:description" content="buffer cache 是文件系统中最接近磁盘的一层抽象，在 6.S081 课程中实现了基于 lru 策略的 buffer cache，在这里做一个总结。  xv6 文件系统中的 buffer cache基本实现xv6 文件系统中的 buffer cache 使用的是最朴素双向链表实现，需要自己维护双向链表， buf 数据结构中有 prev next 两个指针成员变量用来实现双向链表， bcac">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Xv6 Buffer Cache - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Xv6 Buffer Cache
+        
+      </h1>
+
+      <time class="post-time">
+          Apr 28 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>buffer cache 是文件系统中最接近磁盘的一层抽象，在 6.S081 课程中实现了基于 lru 策略的 buffer cache，在这里做一个总结。 </p>
+<h2 id="xv6-文件系统中的-buffer-cache"><a href="#xv6-文件系统中的-buffer-cache" class="headerlink" title="xv6 文件系统中的 buffer cache"></a>xv6 文件系统中的 buffer cache</h2><h3 id="基本实现"><a href="#基本实现" class="headerlink" title="基本实现"></a>基本实现</h3><p>xv6 文件系统中的 buffer cache 使用的是最朴素双向链表实现，需要自己维护双向链表， buf 数据结构中有 prev next 两个指针成员变量用来实现双向链表， bcache 结构体中的 lock 用来保护对 buffer cache 的并发操作，buf 结构体中的 lock 则是用来保对自身 data 成员的并发操作。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">buf</span> &#123;</span></span><br><span class="line">  <span class="keyword">int</span> valid;   <span class="comment">// has data been read from disk?</span></span><br><span class="line">  <span class="keyword">int</span> disk;    <span class="comment">// does disk "own" buf?</span></span><br><span class="line">  uint dev;</span><br><span class="line">  uint blockno;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sleeplock</span> <span class="title">lock</span>;</span></span><br><span class="line">  uint refcnt;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">prev</span>;</span> <span class="comment">// LRU cache list</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">next</span>;</span></span><br><span class="line">  uchar data[BSIZE];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> <span class="title">lock</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> <span class="title">buf</span>[<span class="title">NBUF</span>];</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Linked list of all buffers, through prev/next.</span></span><br><span class="line">  <span class="comment">// Sorted by how recently the buffer was used.</span></span><br><span class="line">  <span class="comment">// head.next is most recent, head.prev is least.</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> <span class="title">head</span>;</span></span><br><span class="line">&#125; bcache;</span><br></pre></td></tr></table></figure>
+<p>在初始化中完成双向链表的构建</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span></span><br><span class="line">binit(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">b</span>;</span></span><br><span class="line"></span><br><span class="line">  initlock(&amp;bcache.lock, <span class="string">"bcache"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Create linked list of buffers</span></span><br><span class="line">  bcache.head.prev = &amp;bcache.head;</span><br><span class="line">  bcache.head.next = &amp;bcache.head;</span><br><span class="line">  <span class="keyword">for</span>(b = bcache.buf; b &lt; bcache.buf+NBUF; b++)&#123;</span><br><span class="line">    b-&gt;next = bcache.head.next;</span><br><span class="line">    b-&gt;prev = &amp;bcache.head;</span><br><span class="line">    initsleeplock(&amp;b-&gt;lock, <span class="string">"buffer"</span>);</span><br><span class="line">    bcache.head.next-&gt;prev = b;</span><br><span class="line">    bcache.head.next = b;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取一个 buf 首先遍历双向链表检查是否已经在 cache 中，如果命中则增加 buf 的 refcnt 并返回 buf。 如果没有命中，则从链表尾部开始向头部遍历寻找 refcnt 为 0 即暂时无人使用的 buf，找到后将其替换成需要获取的 buf。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Look through buffer cache for block on device dev.</span></span><br><span class="line"><span class="comment">// If not found, allocate a buffer.</span></span><br><span class="line"><span class="comment">// In either case, return locked buffer.</span></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">buf</span>*</span></span><br><span class="line"><span class="class"><span class="title">bget</span>(<span class="title">uint</span> <span class="title">dev</span>, <span class="title">uint</span> <span class="title">blockno</span>)</span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">b</span>;</span></span><br><span class="line"></span><br><span class="line">  acquire(&amp;bcache.lock);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Is the block already cached?</span></span><br><span class="line">  <span class="keyword">for</span>(b = bcache.head.next; b != &amp;bcache.head; b = b-&gt;next)&#123;</span><br><span class="line">    <span class="keyword">if</span>(b-&gt;dev == dev &amp;&amp; b-&gt;blockno == blockno)&#123;</span><br><span class="line">      b-&gt;refcnt++;</span><br><span class="line">      release(&amp;bcache.lock);</span><br><span class="line">      acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">      <span class="keyword">return</span> b;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Not cached.</span></span><br><span class="line">  <span class="comment">// Recycle the least recently used (LRU) unused buffer.</span></span><br><span class="line">  <span class="keyword">for</span>(b = bcache.head.prev; b != &amp;bcache.head; b = b-&gt;prev)&#123;</span><br><span class="line">    <span class="keyword">if</span>(b-&gt;refcnt == <span class="number">0</span>) &#123;</span><br><span class="line">      b-&gt;dev = dev;</span><br><span class="line">      b-&gt;blockno = blockno;</span><br><span class="line">      b-&gt;valid = <span class="number">0</span>;</span><br><span class="line">      b-&gt;refcnt = <span class="number">1</span>;</span><br><span class="line">      release(&amp;bcache.lock);</span><br><span class="line">      acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">      <span class="keyword">return</span> b;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  panic(<span class="string">"bget: no buffers"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>释放 buf 则是减少 refcnt, 如果 refcnt 将至 0，就将 buf 放置到链表头部，由于换出 buf 是由尾部向头部遍历，所以最近释放的 buf 会最后被遍历到，这样就实现了 lru 的效果。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Release a locked buffer.</span></span><br><span class="line"><span class="comment">// Move to the head of the most-recently-used list.</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">brelse(struct buf *b)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span>(!holdingsleep(&amp;b-&gt;lock))</span><br><span class="line">    panic(<span class="string">"brelse"</span>);</span><br><span class="line"></span><br><span class="line">  releasesleep(&amp;b-&gt;lock);</span><br><span class="line"></span><br><span class="line">  acquire(&amp;bcache.lock);</span><br><span class="line">  b-&gt;refcnt--;</span><br><span class="line">  <span class="keyword">if</span> (b-&gt;refcnt == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">// no one is waiting for it.</span></span><br><span class="line">    b-&gt;next-&gt;prev = b-&gt;prev;</span><br><span class="line">    b-&gt;prev-&gt;next = b-&gt;next;</span><br><span class="line">    b-&gt;next = bcache.head.next;</span><br><span class="line">    b-&gt;prev = &amp;bcache.head;</span><br><span class="line">    bcache.head.next-&gt;prev = b;</span><br><span class="line">    bcache.head.next = b;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  release(&amp;bcache.lock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">bpin(struct buf *b) &#123;</span><br><span class="line">  acquire(&amp;bcache.lock);</span><br><span class="line">  b-&gt;refcnt++;</span><br><span class="line">  release(&amp;bcache.lock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">bunpin(struct buf *b) &#123;</span><br><span class="line">  acquire(&amp;bcache.lock);</span><br><span class="line">  b-&gt;refcnt--;</span><br><span class="line">  release(&amp;bcache.lock);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h3><p>在基本实现中 buffer cache 的 lock 是一个性能瓶颈，所有对 buffer cache 的操作都需要争抢一个锁。想要降低对 buffer cache 锁的竞争强度，一个很自然的优化就是将 buffer cache 通过哈希函数分成多个 bucket，每个 bucket 通过一个 lock 来保护，通过对 buf 的 blockno 取模来确定使用的 bucket 编号， bucket 数量一般取一个质数。这个优化也可以叫做 multi buffer cache。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NBKT 13</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bkt</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> <span class="title">head</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> <span class="title">lk</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> <span class="title">lock</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> <span class="title">buf</span>[<span class="title">NBUF</span>];</span></span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">bkt</span> <span class="title">bkt</span>[<span class="title">NBKT</span>];</span></span><br><span class="line">&#125; bcache;</span><br></pre></td></tr></table></figure>
+<p>在初始化中首先初始化了 bucket 数组，之后将所有 buf 平均分配到 bucket 中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span></span><br><span class="line">binit(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">b</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">bkt</span> *<span class="title">bkt</span>;</span></span><br><span class="line">  <span class="keyword">int</span> i;</span><br><span class="line"></span><br><span class="line">  initlock(&amp;bcache.lock, <span class="string">"bcache"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; NBKT; i++) &#123;</span><br><span class="line">    bkt = bcache.bkt + i;</span><br><span class="line">    initlock(&amp;bkt-&gt;lk, <span class="string">"bcache"</span>);</span><br><span class="line">    bkt-&gt;head.prev = &amp;bkt-&gt;head;</span><br><span class="line">    bkt-&gt;head.next = &amp;bkt-&gt;head;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(b = bcache.buf, i = <span class="number">0</span>; b &lt; bcache.buf+NBUF; b++, i++)&#123;</span><br><span class="line">    bkt = bcache.bkt + (i % NBKT);</span><br><span class="line"></span><br><span class="line">    b-&gt;next = bkt-&gt;head.next;</span><br><span class="line">    b-&gt;prev = &amp;bkt-&gt;head;</span><br><span class="line">    initsleeplock(&amp;b-&gt;lock, <span class="string">"buffer"</span>);</span><br><span class="line">    bkt-&gt;head.next-&gt;prev = b;</span><br><span class="line">    bkt-&gt;head.next = b;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 multi buffer cache 运行中会遇到一种特殊的情况，即当前的 bucket 中的 buf 全部被用完了，没有空闲的 buf，但这时其他 bucket 中依然有空余的 buf。这种情况的应对办法就是从其他的 bucket 偷窃空闲 buf，这里的实现是从相邻的下一个 bucket 开始依次尝试偷窃一个空闲 buf。在偷窃过程中由于需要操作多个 bucket 的锁，这里的逻辑需要小心处理。</p>
+<ul>
+<li>持有 A bucket 的锁同时获取 B bucket 的锁尝试偷窃，这时需要设置一个全局的 steal lock 来却确保偷窃行为的原子性，否则可能会出现 A 和 B 交差持有对方的锁导致死锁。</li>
+<li>先释放 A bucket 锁，之后获取 B bucket 锁，偷窃后再尝试获取 A bucket 锁，这样同一时间内只持有一个 bucket 的锁，可以避免死锁。但重新获取 A bucket 锁后需要检查 A 中是否已经有了相同 block 的 buf，因为在偷窃中有一段时间是不持有 A 锁的，如果在这段时间内重复 get 相同的 block，不做检查的话 A 中可能出现多个相同的 block buf。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Look through buffer cache for block on device dev.</span></span><br><span class="line"><span class="comment">// If not found, allocate a buffer.</span></span><br><span class="line"><span class="comment">// In either case, return locked buffer.</span></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">buf</span>*</span></span><br><span class="line"><span class="class"><span class="title">bget</span>(<span class="title">uint</span> <span class="title">dev</span>, <span class="title">uint</span> <span class="title">blockno</span>)</span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">buf</span> *<span class="title">b</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">bkt</span> *<span class="title">bkt</span>;</span></span><br><span class="line">  <span class="keyword">int</span> i, j;</span><br><span class="line">  i = blockno % NBKT;</span><br><span class="line">  bkt = bcache.bkt + i;</span><br><span class="line"></span><br><span class="line">  acquire(&amp;bkt-&gt;lk);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Is the block already cached?</span></span><br><span class="line">  <span class="keyword">for</span>(b = bkt-&gt;head.next; b != &amp;bkt-&gt;head; b = b-&gt;next)&#123;</span><br><span class="line">    <span class="keyword">if</span>(b-&gt;dev == dev &amp;&amp; b-&gt;blockno == blockno)&#123;</span><br><span class="line">      b-&gt;refcnt++;</span><br><span class="line">      release(&amp;bkt-&gt;lk);</span><br><span class="line">      acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">      <span class="keyword">return</span> b;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Not cached.</span></span><br><span class="line">  <span class="comment">// Recycle the least recently used (LRU) unused buffer.</span></span><br><span class="line">  <span class="keyword">for</span>(b = bkt-&gt;head.prev; b != &amp;bkt-&gt;head; b = b-&gt;prev)&#123;</span><br><span class="line">    <span class="keyword">if</span>(b-&gt;refcnt == <span class="number">0</span>) &#123;</span><br><span class="line">      b-&gt;dev = dev;</span><br><span class="line">      b-&gt;blockno = blockno;</span><br><span class="line">      b-&gt;valid = <span class="number">0</span>;</span><br><span class="line">      b-&gt;refcnt = <span class="number">1</span>;</span><br><span class="line">      release(&amp;bkt-&gt;lk);</span><br><span class="line">      acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">      <span class="keyword">return</span> b;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  release(&amp;bkt-&gt;lk);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (j = <span class="number">1</span>; j &lt; NBKT; j++) &#123;</span><br><span class="line">    bkt = bcache.bkt + (i + j) % NBKT;</span><br><span class="line"></span><br><span class="line">    acquire(&amp;bkt-&gt;lk);</span><br><span class="line">    <span class="keyword">for</span>(b = bkt-&gt;head.prev; b != &amp;bkt-&gt;head; b = b-&gt;prev)&#123;</span><br><span class="line">      <span class="keyword">if</span>(b-&gt;refcnt == <span class="number">0</span>) &#123;</span><br><span class="line">        b-&gt;next-&gt;prev = b-&gt;prev;</span><br><span class="line">        b-&gt;prev-&gt;next = b-&gt;next;</span><br><span class="line">        release(&amp;bkt-&gt;lk);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        bkt = bcache.bkt + i;</span><br><span class="line">        acquire(&amp;bkt-&gt;lk);</span><br><span class="line">        b-&gt;next = bkt-&gt;head.next;</span><br><span class="line">        b-&gt;prev = &amp;bkt-&gt;head;</span><br><span class="line">        bkt-&gt;head.next-&gt;prev = b;</span><br><span class="line">        bkt-&gt;head.next = b;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(b = bkt-&gt;head.next; b != &amp;bkt-&gt;head; b = b-&gt;next)&#123;</span><br><span class="line">          <span class="keyword">if</span>(b-&gt;dev == dev &amp;&amp; b-&gt;blockno == blockno)&#123;</span><br><span class="line">            b-&gt;refcnt++;</span><br><span class="line">            release(&amp;bkt-&gt;lk);</span><br><span class="line">            acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">            <span class="keyword">return</span> b;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        b = bkt-&gt;head.next;</span><br><span class="line">        b-&gt;dev = dev;</span><br><span class="line">        b-&gt;blockno = blockno;</span><br><span class="line">        b-&gt;valid = <span class="number">0</span>;</span><br><span class="line">        b-&gt;refcnt = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        release(&amp;bkt-&gt;lk);</span><br><span class="line">        acquiresleep(&amp;b-&gt;lock);</span><br><span class="line">        <span class="keyword">return</span> b;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    release(&amp;bkt-&gt;lk);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  panic(<span class="string">"bget: no buffers"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/os/">os</a>
+		  
+			<a href="/tags/xv6/">xv6</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/04/10/age-a-simple-encryption-tool/">
+        <span class="next-text nav-default">age - A simple encryption tool</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
