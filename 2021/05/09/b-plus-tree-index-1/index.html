@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="B Plus Tree Index 1">
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/05/09/b-plus-tree-index-1/">
+
+
+<meta name="description" content="cmu 15445 课程的 project 2 是完整实现一个支持并发的 B+ Tree Index。 B Plus TreeA B+Tree is a self-balancing tree data structure that keeps data sorted and allows searches, sequential access, insertion, and deletions">
+<meta property="og:type" content="article">
+<meta property="og:title" content="B Plus Tree Index 1">
+<meta property="og:url" content="http://yoursite.com/2021/05/09/b-plus-tree-index-1/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="cmu 15445 课程的 project 2 是完整实现一个支持并发的 B+ Tree Index。 B Plus TreeA B+Tree is a self-balancing tree data structure that keeps data sorted and allows searches, sequential access, insertion, and deletions">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://i.imgur.com/HjYlZc7.png">
+<meta property="og:image" content="https://i.imgur.com/pbjMtR2.png">
+<meta property="og:image" content="https://i.imgur.com/dbbLz4a.png">
+<meta property="og:image" content="https://i.imgur.com/mvExwTB.png">
+<meta property="og:image" content="https://i.imgur.com/vjiTTdG.png">
+<meta property="og:updated_time" content="2021-05-31T15:16:38.730Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="B Plus Tree Index 1">
+<meta name="twitter:description" content="cmu 15445 课程的 project 2 是完整实现一个支持并发的 B+ Tree Index。 B Plus TreeA B+Tree is a self-balancing tree data structure that keeps data sorted and allows searches, sequential access, insertion, and deletions">
+<meta name="twitter:image" content="https://i.imgur.com/HjYlZc7.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> B Plus Tree Index 1 - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          B Plus Tree Index 1
+        
+      </h1>
+
+      <time class="post-time">
+          May 09 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>cmu 15445 课程的 project 2 是完整实现一个支持并发的 B+ Tree Index。</p>
+<h2 id="B-Plus-Tree"><a href="#B-Plus-Tree" class="headerlink" title="B Plus Tree"></a>B Plus Tree</h2><p>A B+Tree is a self-balancing tree data structure that keeps data sorted and allows searches, sequential access, insertion, and deletions in O(log(n)). It is optimized for disk-oriented DBMS’s that read/write large blocks of data.</p>
+<div align="center"><br>    <img src="https://i.imgur.com/HjYlZc7.png" width="70%" height="70%"><br></div>
+
+<p>Formally, a B+Tree is an M-way search tree with the following properties:</p>
+<ul>
+<li>It is perfectly balanced (i.e., every leaf node is at the same depth).</li>
+<li>Every inner node other than the root is at least half full (M/2 − 1 &lt;= num of keys &lt;= M − 1).</li>
+<li>Every inner node with k keys has k+1 non-null children.</li>
+</ul>
+<p>Every node in a B+Tree contains an array of key/value pairs. The keys in these pairs are derived from the attribute(s) that the index is based on. The values will differ based on whether a node is an inner node or a leaf node. For inner nodes, the value array will contain pointers to other nodes. Two approaches for leaf node values are record IDs and tuple data. Record IDs refer to a pointer to the location of the tuple. Leaf nodes that have tuple data store the the actual contents of the tuple in each node.<br>Arrays at every node are (almost) sorted by the keys</p>
+<h2 id="Selection-Conditions"><a href="#Selection-Conditions" class="headerlink" title="Selection Conditions"></a>Selection Conditions</h2><p>Because B+Trees are in sorted order, look ups have fast traversal and also do not require the entire key. The<br>DBMS can use a B+Tree index if the query provides any of the attributes of the search key. This differs<br>from a hash index, which requires all attributes in the search key.</p>
+<h2 id="Duplicate-Keys"><a href="#Duplicate-Keys" class="headerlink" title="Duplicate Keys"></a>Duplicate Keys</h2><p>There are two approaches to duplicate keys in a B+Tree.<br>The first approach is to append record IDs as part of the key. Since each tuple’s record ID is unique, this will ensure that all the keys are identifiable.<br>The second approach is to allow leaf nodes to spill into overflow nodes that contain the duplicate keys. Although no redundant information is stored, this approach is more complex to maintain and modify.</p>
+<h2 id="Clustered-Indexes"><a href="#Clustered-Indexes" class="headerlink" title="Clustered Indexes"></a>Clustered Indexes</h2><p>The table is stored in the sort order specified by the primary key, as either heap- or index-organized storage. Since some DBMSs always use a clustered index, they will automatically make a hidden row id primary key if a table doesn’t have an explicit one, but others cannot use them at all.</p>
+<h2 id="Insert"><a href="#Insert" class="headerlink" title="Insert"></a>Insert</h2><p>To insert a new entry into a B+Tree, one must traverse down the tree and use the inner nodes to figure out<br>which leaf node to insert the key into.</p>
+<ol>
+<li>Find correct leaf <code>L</code>.</li>
+<li>Add new entry into <code>L</code> in sorted order:</li>
+</ol>
+<ul>
+<li>If <code>L</code> has enough space, the operation is done.</li>
+<li>Otherwise split <code>L</code> into two nodes <code>L</code> and <code>L2</code>. Redistribute entries evenly and copy up middle key. Insert index entry pointing to <code>L2</code> into parent of <code>L</code>.</li>
+</ul>
+<ol start="3">
+<li>To split an inner node, redistribute entries evenly, but push up the middle key.</li>
+</ol>
+<p>Example:</p>
+<ol>
+<li><p>Insert 11 into leaf page 5.<br><img src="https://i.imgur.com/pbjMtR2.png" alt="tree-insert-00"></p>
+</li>
+<li><p>Leaf page 5 reach max size.<br><img src="https://i.imgur.com/dbbLz4a.png" alt="tree-insert-01"></p>
+</li>
+<li><p>Leaf page 5 split, insert leaf page 6 to root page, root page reach max size.<br><img src="https://i.imgur.com/mvExwTB.png" alt="tree-insert-02"></p>
+</li>
+<li><p>Root page split and populate new root page 8.<br><img src="https://i.imgur.com/vjiTTdG.png" alt="tree-insert-03"></p>
+</li>
+</ol>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2021/05/25/buffer-pool-manager/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Buffer Pool Manager</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2021/04/28/xv6-buffer-cache/">
+        <span class="next-text nav-default">Xv6 Buffer Cache</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
