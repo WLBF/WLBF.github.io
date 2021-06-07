@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Buffer Pool Manager">
+
+
+
+
+  <meta name="keywords" content="database,cmu-15445,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/04/29/buffer-pool-manager/">
+
+
+<meta name="description" content="实现CMU-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 O_DIRECT flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框">
+<meta name="keywords" content="database,cmu-15445">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Buffer Pool Manager">
+<meta property="og:url" content="http://yoursite.com/2021/04/29/buffer-pool-manager/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="实现CMU-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 O_DIRECT flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-06-07T15:17:43.836Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Buffer Pool Manager">
+<meta name="twitter:description" content="实现CMU-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 O_DIRECT flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Buffer Pool Manager - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Buffer Pool Manager
+        
+      </h1>
+
+      <time class="post-time">
+          Apr 29 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>CMU-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 <code>O_DIRECT</code> flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框架，可以看到相比于之前 xv6 中原始的实现，buffer pool manager 有了更巧妙的抽象，内存淘汰策略的逻辑抽象成了 replacer 类，替换淘汰策略只需要替换不同的 replacer 子类，在这里实现的还是 lru_replacer。page 和 frame 也做出了清晰抽象, page 代表一块磁盘上的数据，frame 则是在内存中缓存 page 的槽位，buffer pool manager 初始化的时候指定了 frame 的数量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BufferPoolManager</span> &#123;</span></span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">enum</span> <span class="class"><span class="keyword">class</span> <span class="title">CallbackType</span> &#123;</span> BEFORE, AFTER &#125;;</span><br><span class="line">  <span class="keyword">using</span> bufferpool_callback_fn = <span class="keyword">void</span> (*)(<span class="keyword">enum</span> CallbackType, <span class="keyword">const</span> <span class="keyword">page_id_t</span> page_id);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Creates a new BufferPoolManager.</span></span><br><span class="line"><span class="comment">   * @param pool_size the size of the buffer pool</span></span><br><span class="line"><span class="comment">   * @param disk_manager the disk manager</span></span><br><span class="line"><span class="comment">   * @param log_manager the log manager (for testing only: nullptr = disable logging)</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  BufferPoolManager(<span class="keyword">size_t</span> pool_size, DiskManager *disk_manager, LogManager *log_manager = <span class="literal">nullptr</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Destroys an existing BufferPoolManager.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  ~BufferPoolManager();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** @return pointer to all the pages in the buffer pool */</span></span><br><span class="line">  <span class="function">Page *<span class="title">GetPages</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> pages_; &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** @return size of the buffer pool */</span></span><br><span class="line">  <span class="keyword">size_t</span> GetPoolSize() &#123; <span class="keyword">return</span> pool_size_; &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">protected</span>:</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Fetch the requested page from the buffer pool.</span></span><br><span class="line"><span class="comment">   * @param page_id id of page to be fetched</span></span><br><span class="line"><span class="comment">   * @return the requested page</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">Page *<span class="title">FetchPageImpl</span><span class="params">(<span class="keyword">page_id_t</span> page_id)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Unpin the target page from the buffer pool.</span></span><br><span class="line"><span class="comment">   * @param page_id id of page to be unpinned</span></span><br><span class="line"><span class="comment">   * @param is_dirty true if the page should be marked as dirty, false otherwise</span></span><br><span class="line"><span class="comment">   * @return false if the page pin count is &lt;= 0 before this call, true otherwise</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">UnpinPageImpl</span><span class="params">(<span class="keyword">page_id_t</span> page_id, <span class="keyword">bool</span> is_dirty)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Flushes the target page to disk.</span></span><br><span class="line"><span class="comment">   * @param page_id id of page to be flushed, cannot be INVALID_PAGE_ID</span></span><br><span class="line"><span class="comment">   * @return false if the page could not be found in the page table, true otherwise</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">FlushPageImpl</span><span class="params">(<span class="keyword">page_id_t</span> page_id)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Creates a new page in the buffer pool.</span></span><br><span class="line"><span class="comment">   * @param[out] page_id id of created page</span></span><br><span class="line"><span class="comment">   * @return nullptr if no new pages could be created, otherwise pointer to new page</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function">Page *<span class="title">NewPageImpl</span><span class="params">(<span class="keyword">page_id_t</span> *page_id)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Deletes a page from the buffer pool.</span></span><br><span class="line"><span class="comment">   * @param page_id id of page to be deleted</span></span><br><span class="line"><span class="comment">   * @return false if the page exists but could not be deleted, true if the page didn't exist or deletion succeeded</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">DeletePageImpl</span><span class="params">(<span class="keyword">page_id_t</span> page_id)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Flushes all the pages in the buffer pool to disk.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">FlushAllPagesImpl</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/** Number of pages in the buffer pool. */</span></span><br><span class="line">  <span class="keyword">size_t</span> pool_size_;</span><br><span class="line">  <span class="comment">/** Array of buffer pool pages. */</span></span><br><span class="line">  Page *pages_;</span><br><span class="line">  <span class="comment">/** Pointer to the disk manager. */</span></span><br><span class="line">  DiskManager *disk_manager_ __attribute__((__unused__));</span><br><span class="line">  <span class="comment">/** Pointer to the log manager. */</span></span><br><span class="line">  LogManager *log_manager_ __attribute__((__unused__));</span><br><span class="line">  <span class="comment">/** Page table for keeping track of buffer pool pages. */</span></span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">unordered_map</span>&lt;<span class="keyword">page_id_t</span>, <span class="keyword">frame_id_t</span>&gt; page_table_;</span><br><span class="line">  <span class="comment">/** Replacer to find unpinned pages for replacement. */</span></span><br><span class="line">  Replacer *replacer_;</span><br><span class="line">  <span class="comment">/** List of free pages. */</span></span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">frame_id_t</span>&gt; free_list_;</span><br><span class="line">  <span class="comment">/** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */</span></span><br><span class="line">  <span class="built_in">std</span>::mutex latch_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在操作 buffer pool manager 的过程中，如果一个 frame 中的 page pin count 降至 0，就会调用 Unpin 方法将这个 frame 加入 replacer 中，代表这个 frame 可以被其他 page 替换。如果 replacer 中的某个 frame 的 page pin count 增加，即有人 fetch 这个 page, 那么又会调用 Pin 方法将 frame 从 replacer 中移除。replacer 中的 frame 数量加上 free_list_ 和正在使用中的 frame 的数量即为全部 frame 的数量。下面给出了使用的是哈希表加上链表 lru replacer 的实现，由于这里 frame_id 为 0 开头的连续整数所以使用 vector 当做哈希表使用，vector 中存放的是链表的迭代器，方便在 O(1) 时间内定位 frame 在链表中的位置, 每次新加入的 frame 会放在链表结尾， Victim 方法会从链表头部取出 frame, 这样最旧的 frame 会最先被换出，符合 lru(least recently used) 的逻辑。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * LRUReplacer implements the lru replacement policy, which approximates the Least Recently Used policy.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LRUReplacer</span> :</span> <span class="keyword">public</span> Replacer &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Create a new LRUReplacer.</span></span><br><span class="line"><span class="comment">   * @param num_pages the maximum number of pages the LRUReplacer will be required to store</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">LRUReplacer</span><span class="params">(<span class="keyword">size_t</span> num_pages)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Destroys the LRUReplacer.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  ~LRUReplacer() override;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">Victim</span><span class="params">(<span class="keyword">frame_id_t</span> *frame_id)</span> override</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Pin</span><span class="params">(<span class="keyword">frame_id_t</span> frame_id)</span> override</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">Unpin</span><span class="params">(<span class="keyword">frame_id_t</span> frame_id)</span> override</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">size_t</span> Size() override;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">frame_id_t</span>&gt; list_;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">list</span>&lt;<span class="keyword">frame_id_t</span>&gt;::iterator&gt; table_;</span><br><span class="line">  <span class="built_in">std</span>::mutex latch_;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">LRUReplacer::LRUReplacer(<span class="keyword">size_t</span> num_pages) : table_(num_pages, list_.end()) &#123;&#125;</span><br><span class="line"></span><br><span class="line">LRUReplacer::~LRUReplacer() = <span class="keyword">default</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">bool</span> LRUReplacer::Victim(<span class="keyword">frame_id_t</span> *frame_id) &#123;</span><br><span class="line">  <span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; guard(latch_);</span><br><span class="line">  <span class="keyword">if</span> (list_.empty()) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">frame_id_t</span> new_frame_id = list_.front();</span><br><span class="line">  list_.pop_front();</span><br><span class="line">  table_[new_frame_id] = list_.end();</span><br><span class="line"></span><br><span class="line">  *frame_id = new_frame_id;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> LRUReplacer::Pin(<span class="keyword">frame_id_t</span> frame_id) &#123;</span><br><span class="line">  <span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; guard(latch_);</span><br><span class="line">  <span class="keyword">if</span> (table_[frame_id] != list_.end()) &#123;</span><br><span class="line">    list_.erase(table_[frame_id]);</span><br><span class="line">    table_[frame_id] = list_.end();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> LRUReplacer::Unpin(<span class="keyword">frame_id_t</span> frame_id) &#123;</span><br><span class="line">  <span class="built_in">std</span>::lock_guard&lt;<span class="built_in">std</span>::mutex&gt; guard(latch_);</span><br><span class="line">  <span class="keyword">if</span> (table_[frame_id] == list_.end()) &#123;</span><br><span class="line">    list_.emplace_back(frame_id);</span><br><span class="line">    table_[frame_id] = <span class="built_in">std</span>::prev(list_.end());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">size_t</span> LRUReplacer::Size() &#123; <span class="keyword">return</span> list_.size(); &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><p>数据库中对 buffer pool manager 还可以进行一些优化包括</p>
+<ul>
+<li>Multiple Buffer Pools - 之前 xv6 buffer cache 中已经介绍，通过哈希函数切分 buffer pool 减小锁的竞争以及改善局部性。</li>
+<li>Pre-Fetching - pre fetch 数据进入 buffer pool 增加访问命中率。 </li>
+<li>Scan Sharing - 允许多个 query 共享 cursor 增加访问磁盘的效率。</li>
+<li>Buffer Pool Bypass - 序列扫描数据不会缓存在 buffer pool 中，减小换入换出开销。</li>
+</ul>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/database/">database</a>
+		  
+			<a href="/tags/cmu-15445/">cmu-15445</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/2021/05/09/b-plus-tree-index-1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">B Plus Tree Index 1</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
+    
+    
+      <a class="next" href="/2021/04/28/xv6-buffer-cache/">
+        <span class="next-text nav-default">Xv6 Buffer Cache</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
