@@ -194,7 +194,7 @@ binit(void)
 }
 ```
 
-在 multi buffer cache 运行中会遇到一种特殊的情况，即当前的 bucket 中的 buf 全部被用完了，没有空闲的 buf，但这时其他 bucket 中依然有空余的 buf。这种情况的应对办法就是从其他的 bucket 偷窃空闲 buf，这里的实现是从相邻的下一个 bucket 开始依次尝试偷窃一个空闲 buf。在偷窃过程中由于需要操作多个 bucket 的锁，这里的逻辑需要小心处理。
+在 multi buffer cache 运行中会遇到一种特殊的情况，即当前的 bucket 中的 buf 全部被用完了，没有空闲的 buf，但这时其他 bucket 中依然有空余的 buf。这种情况的应对办法就是从其他的 bucket 偷窃空闲 buf，这里的实现是从相邻的下一个 bucket 开始依次尝试偷窃一个空闲 buf。在偷窃过程中由于需要操作多个 bucket 的锁，这里的逻辑需要小心处理，解决思路有两种。
 * 持有 A bucket 的锁同时获取 B bucket 的锁尝试偷窃，这时需要设置一个全局的 steal lock 来却确保偷窃行为的原子性，否则可能会出现 A 和 B 交差持有对方的锁导致死锁。
 * 先释放 A bucket 锁，之后获取 B bucket 锁，偷窃后再尝试获取 A bucket 锁，这样同一时间内只持有一个 bucket 的锁，可以避免死锁。但重新获取 A bucket 锁后需要检查 A 中是否已经有了相同 block 的 buf，因为在偷窃中有一段时间是不持有 A 锁的，如果在这段时间内重复 get 相同的 block，不做检查的话 A 中可能出现多个相同的 block buf。
 

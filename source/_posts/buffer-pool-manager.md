@@ -6,7 +6,7 @@ tags: [database, cmu-15445]
 
 ## 实现
 
-cmu-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 `O_DIRECT` flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框架，可以看到相比于之前 xv6 中原始的实现，buffer pool manager 有了更巧妙的抽象，内存淘汰策略的逻辑抽象成了 replacer 类，替换淘汰策略只需要替换不同的 replacer 子类，在这里实现的还是 lru_replacer。page 和 frame 也做出了清晰抽象, page 代表一块磁盘上的数据，frame 则是在内存中缓存 page 的槽位，buffer pool manager 初始化的时候指定了 frame 的数量。
+CMU-15445 数据库课程 project 1 需要给 bustub 实现一个 lru buffer pool manager。 和之前 xv6 中的 buffer cache 功能类似，属于数据库系统的最底层抽象。由于数据库需要精细地控制 IO 操作，所以一般的数据库系统都会通过系统调用的 `O_DIRECT` flag 来绕过操作系统本身的 buffer cache。代码中已经给了大致的框架，可以看到相比于之前 xv6 中原始的实现，buffer pool manager 有了更巧妙的抽象，内存淘汰策略的逻辑抽象成了 replacer 类，替换淘汰策略只需要替换不同的 replacer 子类，在这里实现的还是 lru_replacer。page 和 frame 也做出了清晰抽象, page 代表一块磁盘上的数据，frame 则是在内存中缓存 page 的槽位，buffer pool manager 初始化的时候指定了 frame 的数量。
 
 ```c++
 class BufferPoolManager {
