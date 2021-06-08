@@ -35,18 +35,18 @@
 <link rel="canonical" href="http://yoursite.com/2021/04/10/age-a-simple-encryption-tool/">
 
 
-<meta name="description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 st">
+<meta name="description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 str4d/">
 <meta name="keywords" content="cryptography">
 <meta property="og:type" content="article">
 <meta property="og:title" content="age - A simple encryption tool">
 <meta property="og:url" content="http://yoursite.com/2021/04/10/age-a-simple-encryption-tool/index.html">
 <meta property="og:site_name" content="WLBF">
-<meta property="og:description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 st">
+<meta property="og:description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 str4d/">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2021-04-24T13:39:22.255Z">
+<meta property="og:updated_time" content="2021-06-08T16:21:29.783Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="age - A simple encryption tool">
-<meta name="twitter:description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 st">
+<meta name="twitter:description" content="Introductionage 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 str4d/">
 
 
 <link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
@@ -130,7 +130,7 @@
 
     
             <div class="post-content">
-            <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p><a href="https://github.com/FiloSottile/age" target="_blank" rel="noopener">age</a> 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG age 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 <a href="https://github.com/str4d/rage" target="_blank" rel="noopener">str4d/rage</a>。</p>
+            <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p><a href="https://github.com/FiloSottile/age" target="_blank" rel="noopener">age</a> 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 <a href="https://github.com/str4d/rage" target="_blank" rel="noopener">str4d/rage</a>。</p>
 <h2 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h2><p>age 的使用非常简单。通常情况下 x25519 曲线的公私钥二进制长度均为 32 个字节，在这里公私钥编码方式选择源自 Bitcoin 的 bech32。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">➜  age git:(master) ✗ ./age-keygen </span><br><span class="line"># created: 2021-04-10T02:54:30+08:00</span><br><span class="line"># public key: age1vm2yf505x5ctzw73vftk5gwzdsry4jlxfqhltsh4yfl07n6qluzsd8r9hk</span><br><span class="line">AGE-SECRET-KEY-1Q4GC3VNU9HSKFFTJ5UTTDUXQGH9X6UQ0E3W53WT70QQLF57QR5RQF5CG53</span><br><span class="line">➜  age git:(master) ✗ head -c 32 /dev/random | base64 &gt; plain.txt</span><br><span class="line">➜  age git:(master) ✗ ./age -r age1vm2yf505x5ctzw73vftk5gwzdsry4jlxfqhltsh4yfl07n6qluzsd8r9hk -o cipher.txt plain.txt</span><br><span class="line">➜  age git:(master) ✗ ./age -i ./key.txt -o decrypt.txt -d chiper.txt</span><br></pre></td></tr></table></figure>
 <h3 id="ECDHE"><a href="#ECDHE" class="headerlink" title="ECDHE"></a>ECDHE</h3><p>ECDH 是一种利用椭圆曲线离散对数难题设计的密钥共享算法。可以简单描述为以下形式，a 和 b 为 alice 和 bob 的私钥，一般是两个随机数， a 和 b 分别与同一个基点 G 做乘法得到各自的公钥， 由于离散对数难题，傍观者无法通过公钥 A 和基点 G 计算出私钥。alice 和 bob 只需要使用自己的私钥和对方的公钥做乘法，即可得到双方共享的密钥。私钥可以选择临时生成，因为可能在完成了密钥交换之后，私钥就可能不再需要使用，ECDHE 最后一个字母 E 代表 ephemeral。</p>

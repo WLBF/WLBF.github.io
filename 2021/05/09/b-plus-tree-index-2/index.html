@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="B Plus Tree Index 2">
+
+
+
+
+  <meta name="keywords" content="database,cmu-15445,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/05/09/b-plus-tree-index-2/">
+
+
+<meta name="description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta name="keywords" content="database,cmu-15445">
+<meta property="og:type" content="article">
+<meta property="og:title" content="B Plus Tree Index 2">
+<meta property="og:url" content="http://yoursite.com/2021/05/09/b-plus-tree-index-2/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://i.imgur.com/Z9I5osf.png">
+<meta property="og:image" content="https://i.imgur.com/9QypOKa.png">
+<meta property="og:image" content="https://i.imgur.com/zydTp11.png">
+<meta property="og:image" content="https://i.imgur.com/cOsdezK.png">
+<meta property="og:image" content="https://i.imgur.com/lAANP5y.png">
+<meta property="og:image" content="https://i.imgur.com/BXcnyep.png">
+<meta property="og:image" content="https://i.imgur.com/VYwoYTa.png">
+<meta property="og:image" content="https://i.imgur.com/LmSpdUd.png">
+<meta property="og:image" content="https://i.imgur.com/7NoRq2J.png">
+<meta property="og:image" content="https://i.imgur.com/eL04S3y.png">
+<meta property="og:image" content="https://i.imgur.com/iH8ihvP.png">
+<meta property="og:image" content="https://i.imgur.com/tllT9jx.png">
+<meta property="og:updated_time" content="2021-06-08T16:24:06.315Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="B Plus Tree Index 2">
+<meta name="twitter:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta name="twitter:image" content="https://i.imgur.com/Z9I5osf.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> B Plus Tree Index 2 - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          B Plus Tree Index 2
+        
+      </h1>
+
+      <time class="post-time">
+          May 09 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="Deletion"><a href="#Deletion" class="headerlink" title="Deletion"></a>Deletion</h2><p>B+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。</p>
+<p>Whereas in inserts we occasionally had to split leaves when the tree got too full, if a deletion causes a tree<br>to be less than half-full, we must merge in order to re-balance the tree.</p>
+<ol>
+<li>Find correct leaf L.</li>
+<li>Remove the entry:</li>
+</ol>
+<ul>
+<li>If L is at least half full, the operation is done.</li>
+<li>Otherwise, you can try to redistribute, borrowing from sibling.</li>
+<li>If redistribution fails, merge L and sibling.</li>
+</ul>
+<ol start="3">
+<li>If merge occurred, you must delete entry in parent pointing to L.</li>
+</ol>
+<h3 id="Coalsece"><a href="#Coalsece" class="headerlink" title="Coalsece"></a>Coalsece</h3><p>例1：<br>在下图中删除了 8 这个 value 之后 leaf node P5 只剩下一个元素，此时需要选择进行 coalsece 或是 redistribue。首先选择一个 sibling node，选择左侧或右侧都可以，这里为了实现的简便，首选左侧 sibling node。P5 和 P4 合并之后需要从父节点即 P7 中删除指向 P5 的元素，这样又导致了 internal node P7 不足半满。类似地选择 P3 与 P7 进行合并。可以看到合并 P3 与 P7 的过程中从 P8 中删除了指向 P7 的指针，为了维持 internal node <code>n_val == n_key + 1</code> 的结构，还需要将 key 5 加入到 P3 中。</p>
+<p><img src="https://i.imgur.com/Z9I5osf.png" alt="tree-coalsece-2.png"><br><img src="https://i.imgur.com/9QypOKa.png" alt="tree-coalsece-3.png"></p>
+<p>例2：<br>与例1的不同之处在与删除的是父节点的第一个子节点中的元素 1 ，由于 P3 没有 left sibling，必须选择 right sibling。由于整个过程与上个例子相似，在实现中对 P3 P7 节点变量进行 swap 即可复用上一个例子的逻辑。</p>
+<p><img src="https://i.imgur.com/zydTp11.png" alt="tree-coalsece-0.png"><br><img src="https://i.imgur.com/cOsdezK.png" alt="tree-coalsece-1.png"></p>
+<h3 id="Redistribute"><a href="#Redistribute" class="headerlink" title="Redistribute"></a>Redistribute</h3><p>例3：<br>删除 key 17 18 之后 leaf node P5 不足半满，选中 left sibling P6进行操作， 而此时 P6 有 4 个元素，4 + 1 &gt;= 5 需要 redistribute。首先从 P6 的末尾移动 key value 15 到 P5 的开头，为了维持树的结构还需要将父节点 P7 中的 key 16 替换为 key 15。<br><img src="https://i.imgur.com/lAANP5y.png" alt="tree-redistribute-0.png"><br><img src="https://i.imgur.com/BXcnyep.png" alt="tree-redistribute-1.png"></p>
+<p>例4：<br>和例3类似，不同之处在与 P4 是父节点的第一个子节点， 所以选择了 right sibling，将 right sibling 开头的 key value 移动到 P4 的末尾。<br><img src="https://i.imgur.com/VYwoYTa.png" alt="tree-redistribute-2.png"><br><img src="https://i.imgur.com/LmSpdUd.png" alt="tree-redistribute-3.png"></p>
+<p>例5：</p>
+<p>删除 key 4 会引发了 P1 与 P2 coalsece，此时 internal node P3 中只剩下一个 value，需要和 P7 进行 redistribute。首先将 P7 开头的的 value 移动到 P3 末尾，相对应的 key 则是父节点中的 key 5，父节点中原本 key 5 的位置则由 P7 的首个 key 7 取代。internal node left sibling redistribute 过程相似就不再赘述。<br><img src="https://i.imgur.com/7NoRq2J.png" alt="tree-redistribute-4.png"><br><img src="https://i.imgur.com/eL04S3y.png" alt="tree-redistribute-5.png"></p>
+<h3 id="Adjust-Root"><a href="#Adjust-Root" class="headerlink" title="Adjust Root"></a>Adjust Root</h3><p>例6：<br>删除 key 4 之后由于 coalsece root 此时 root P3 只有一个子节点 P1，需要做的操作是将 root P3 删除，将子节点 P1 提升为新的 root 节点。<br><img src="https://i.imgur.com/iH8ihvP.png" alt="tree-adjust-root-0.png"><br><img src="https://i.imgur.com/tllT9jx.png" alt="tree-adjust-root-1.png"></p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/database/">database</a>
+		  
+			<a href="/tags/cmu-15445/">cmu-15445</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/05/09/b-plus-tree-index-1/">
+        <span class="next-text nav-default">B Plus Tree Index 1</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
