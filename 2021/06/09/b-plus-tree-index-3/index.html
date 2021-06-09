@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="B Plus Tree Index 3">
+
+
+
+
+  <meta name="keywords" content="database,cmu-15445,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/06/09/b-plus-tree-index-3/">
+
+
+<meta name="description" content="在数据库领域一般将操作系统层面上的 lock 称作 latch，为了实现对 B+ tree 的并发访问，需要使用 read write latch 来对树中的 node 进行保护， 对 B+ tree 的并发访问会使用一种叫做 crabbing/coupling 的技巧。 B+Tree LatchingLock crabbing/coupling is a protocol to allow mu">
+<meta name="keywords" content="database,cmu-15445">
+<meta property="og:type" content="article">
+<meta property="og:title" content="B Plus Tree Index 3">
+<meta property="og:url" content="http://yoursite.com/2021/06/09/b-plus-tree-index-3/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="在数据库领域一般将操作系统层面上的 lock 称作 latch，为了实现对 B+ tree 的并发访问，需要使用 read write latch 来对树中的 node 进行保护， 对 B+ tree 的并发访问会使用一种叫做 crabbing/coupling 的技巧。 B+Tree LatchingLock crabbing/coupling is a protocol to allow mu">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-06-09T11:31:24.478Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="B Plus Tree Index 3">
+<meta name="twitter:description" content="在数据库领域一般将操作系统层面上的 lock 称作 latch，为了实现对 B+ tree 的并发访问，需要使用 read write latch 来对树中的 node 进行保护， 对 B+ tree 的并发访问会使用一种叫做 crabbing/coupling 的技巧。 B+Tree LatchingLock crabbing/coupling is a protocol to allow mu">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> B Plus Tree Index 3 - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          B Plus Tree Index 3
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 09 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>在数据库领域一般将操作系统层面上的 lock 称作 latch，为了实现对 B+ tree 的并发访问，需要使用 read write latch 来对树中的 node 进行保护， 对 B+ tree 的并发访问会使用一种叫做 crabbing/coupling 的技巧。</p>
+<h2 id="B-Tree-Latching"><a href="#B-Tree-Latching" class="headerlink" title="B+Tree Latching"></a>B+Tree Latching</h2><p>Lock crabbing/coupling is a protocol to allow multiple threads to access/modify B+Tree at the same time.<br>The basic idea is as follows.</p>
+<ol>
+<li>Get latch for the parent.</li>
+<li>Get latch for the child.</li>
+<li>Release latch for the parent if it is deemed “safe”. A “safe” node is one that will not split or merge when updated (not full-on insertion or more than half full on deletion).</li>
+</ol>
+<h3 id="Basic-Latch-Crabbing-Protocol"><a href="#Basic-Latch-Crabbing-Protocol" class="headerlink" title="Basic Latch Crabbing Protocol:"></a>Basic Latch Crabbing Protocol:</h3><ul>
+<li><strong>Search:</strong> Start at the root and go down, repeatedly acquire latch on the child and then unlatch parent.</li>
+<li><strong>Insert/Delete:</strong> Start at the root and go down, obtaining X latches as needed. Once the child is latched, check if it is safe. If the child is safe, release latches on all its ancestors.</li>
+</ul>
+<p>Note that read latches do not need to worry about the “safe” condition. The notion of “safe” also depends on whether the operation is an insertion or a deletion. A full node is “safe” for deletion since a merge will not be needed but is not “safe” for an insertion since we may need to split the node. The order in which latches are released is not important from a correctness perspective. However, from a performance point of view, it is better to release the latches that are higher up in the tree since they block access to a larger portion of leaf nodes.</p>
+<p>B+ tree 节点的获取锁顺序遵循从上至下的原则，如果两个线程获取锁的顺序相反则会出现死锁情况。所以在树修改过程中不允许出现从下向上获取父节点锁的行为，这就要求在获取锁的过程中要一次性获取所有可能出现改动 (split/coalsece/redistribte/修改内容) 的 node。通过检查 node 元素数量 <code>n</code> 可以分辨出该 node 是否 safe(不会发生 split/coalsece/redistribte) 即  <code>n &lt; max_size - 1 &amp;&amp; n &gt; max_size / 2</code>。crabbing 的具体实现是，从 root node 开始向 leaf node 遍历，获取每一个 node 的写锁之后将其插入一个双端队列中。如果判断当前的 node 是一个 safe node，就将队列中该 node 之前所有的 node 解锁并弹出。最终队列中会剩下包括 leaf node 在内所有可能出现改动的 node。在 split 的过程中由于新分配的 node 只有当前线程可见所以无需加锁，而在实现 coalsece/redistribute 的过程中则必须需要获取选中的 sbiling node 的锁，因为此时可能出现竞争的情况。</p>
+<h3 id="Improved-Lock-Crabbing-Protocol"><a href="#Improved-Lock-Crabbing-Protocol" class="headerlink" title="Improved Lock Crabbing Protocol:"></a>Improved Lock Crabbing Protocol:</h3><p>The problem with the basic latch crabbing algorithm is that transactions always acquire an exclusive latch on the root for every insert/delete operation. This limits parallelism.<br>Instead, one can assume that having to resize (i.e., split/merge nodes) is rare, and thus transactions can acquire shared latches down to the leaf nodes. Each transaction will assume that the path to the target leaf node is safe, and use READ latches and crabbing to reach it and verify. If the leaf node is not safe, then we abort and do the previous algorithm where we acquire WRITE latches.</p>
+<ul>
+<li><strong>Search:</strong> Same algorithm as before.</li>
+<li><strong>Insert/Delete:</strong> Set READ latches as if for search, go to leaf, and set WRITE latch on leaf. If the leaf is<br>not safe, release all previous latches, and restart the transaction using previous Insert/Delete protocol.</li>
+</ul>
+<p>由于 page_size 的关系，节点发生 split/coalsece/redistribte 的概率是非常低的，所以可以实现一个乐观优化。每次改动从 root node 开始像 search 过程中那样获取读锁，只有到了 leaf node 再获取写锁，如果此时双端队列中不止有 leaf node 这一个 node，说明需要 split/coalsece/redistribte。这时将整个队列中的 node 都释放掉，从 root node 开始重新顺序获取写锁。在 page_size 为 4096 的测试中，实现优化之后 B+ tree 并发访问性能大约提升了 40%。  </p>
+<h3 id="Root-latching"><a href="#Root-latching" class="headerlink" title="Root latching"></a>Root latching</h3><p>由于 B+ tree 还有可能出现 root node 的变化，这里需要特殊的处理。一种思路是额外设置一个 root_latch 在 crabbing 的过程中每次解锁 node 时检查是否满足释放 root_latch 的条件，即 root node 不会出现改动，如果满足条件即可释放 root_latch。另一种更巧妙的技巧是，设置一个虚拟 root page，每操作开始时像对待其他 page 一样将这个 v_root_page 加锁并加入队列中，之后按照的 crabbing 正常操作，如果 v_root_page 被解锁释放，代表着 root node 是安全的，可以被其他线程访问了。  </p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/database/">database</a>
+		  
+			<a href="/tags/cmu-15445/">cmu-15445</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/05/09/b-plus-tree-index-2/">
+        <span class="next-text nav-default">B Plus Tree Index 2</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
