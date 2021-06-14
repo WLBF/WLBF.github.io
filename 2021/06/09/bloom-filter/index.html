@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Bloom Filter">
+
+
+
+
+  <meta name="keywords" content="algorithm,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/06/09/bloom-filter/">
+
+
+<meta name="description" content="简介Bloom Filter 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。简单描述： 存在一个 m 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 k 个不同的 h">
+<meta name="keywords" content="algorithm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Bloom Filter">
+<meta property="og:url" content="http://yoursite.com/2021/06/09/bloom-filter/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="简介Bloom Filter 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。简单描述： 存在一个 m 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 k 个不同的 h">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png">
+<meta property="og:updated_time" content="2021-06-14T15:24:47.475Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Bloom Filter">
+<meta name="twitter:description" content="简介Bloom Filter 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。简单描述： 存在一个 m 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 k 个不同的 h">
+<meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Bloom Filter - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Bloom Filter
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 09 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><a href="https://en.wikipedia.org/wiki/Bloom_filter#" target="_blank" rel="noopener">Bloom Filter</a> 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。<br>简单描述： 存在一个 <code>m</code> 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 <code>k</code> 个不同的 hash 函数。</p>
+<ul>
+<li><strong>添加：</strong>使用 <code>k</code> 个 hash 函数对新元素进行计算，得到 <code>k</code> 个不同的位置，并把 bit 数组中的这些位置设为 1。</li>
+<li><strong>搜索：</strong>使用 <code>k</code> 个 hash 函数对新元素进行计算，得到 <code>k</code> 个不同的位置，检查 bit 数组中这些位置是否全部为 1，如果符合则返回 true。</li>
+</ul>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png" alt="bloom-filter"></p>
+<h2 id="参数选择"><a href="#参数选择" class="headerlink" title="参数选择"></a>参数选择</h2><p>对于给定 <code>m</code> 位 bit 数组， 元素总数为 <code>n</code> ，使假阳性概率最低的 hash 函数数量 <code>k = m/n*ln2</code>。在 <a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener">go-zero</a> 的实现中设置 <code>k</code> 为固定值 14，具体的假阳性概率可以参考 <a href="http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html" target="_blank" rel="noopener">Bloom Filters - the math</a></p>
+<h2 id="RedisBloom"><a href="#RedisBloom" class="headerlink" title="RedisBloom"></a>RedisBloom</h2><p>redis 4.0 之后引入了 module 机制，可以很轻松地使用 RedisBloom module 实现 bloom filter 功能：<br><a href="https://github.com/RedisBloom/RedisBloom/" target="_blank" rel="noopener">https://github.com/RedisBloom/RedisBloom/</a></p>
+<h2 id="手动实现"><a href="#手动实现" class="headerlink" title="手动实现"></a>手动实现</h2><p>如果基于某种原因，比如 GCP 不支持，不能直接使用 redis module，可以手动实现基于 redis 的 bloom filter。参考 <a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener">go-zero</a> 的实现（省略了一些代码）：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  <span class="comment">// for detailed error rate table, see http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html</span></span><br><span class="line">  <span class="comment">// maps as k in the error rate table</span></span><br><span class="line">  maps      = <span class="number">14</span></span><br><span class="line">  setScript = <span class="string">`</span></span><br><span class="line"><span class="string">for _, offset in ipairs(ARGV) do</span></span><br><span class="line"><span class="string">	redis.call("setbit", KEYS[1], offset, 1)</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">`</span></span><br><span class="line">  testScript = <span class="string">`</span></span><br><span class="line"><span class="string">for _, offset in ipairs(ARGV) do</span></span><br><span class="line"><span class="string">	if tonumber(redis.call("getbit", KEYS[1], offset)) == 0 then</span></span><br><span class="line"><span class="string">		return false</span></span><br><span class="line"><span class="string">	end</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string">return true</span></span><br><span class="line"><span class="string">`</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>redis 中的 bit array 操作是通过 lua script 来实现的。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// New create a Filter, store is the backed redis, key is the key for the bloom filter,</span></span><br><span class="line"><span class="comment">// bits is how many bits will be used, maps is how many hashes for each addition.</span></span><br><span class="line"><span class="comment">// best practices:</span></span><br><span class="line"><span class="comment">// elements - means how many actual elements</span></span><br><span class="line"><span class="comment">// when maps = 14, formula: 0.7*(bits/maps), bits = 20*elements, the error rate is 0.000067 &lt; 1e-4</span></span><br><span class="line"><span class="comment">// for detailed error rate table, see http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">(store *redis.Redis, key <span class="keyword">string</span>, bits <span class="keyword">uint</span>)</span> *<span class="title">Filter</span></span> &#123;</span><br><span class="line">  <span class="keyword">return</span> &amp;Filter&#123;</span><br><span class="line">    bits:   bits,</span><br><span class="line">    bitSet: newRedisBitSet(store, key, bits),</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(f *Filter)</span> <span class="title">getLocations</span><span class="params">(data []<span class="keyword">byte</span>)</span> []<span class="title">uint</span></span> &#123;</span><br><span class="line">  locations := <span class="built_in">make</span>([]<span class="keyword">uint</span>, maps)</span><br><span class="line">  <span class="keyword">for</span> i := <span class="keyword">uint</span>(<span class="number">0</span>); i &lt; maps; i++ &#123;</span><br><span class="line">    hashValue := hash.Hash(<span class="built_in">append</span>(data, <span class="keyword">byte</span>(i)))</span><br><span class="line">    locations[i] = <span class="keyword">uint</span>(hashValue % <span class="keyword">uint64</span>(f.bits))</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> locations</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *redisBitSet)</span> <span class="title">buildOffsetArgs</span><span class="params">(offsets []<span class="keyword">uint</span>)</span> <span class="params">([]<span class="keyword">string</span>, error)</span></span> &#123;</span><br><span class="line">  <span class="keyword">var</span> args []<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> _, offset := <span class="keyword">range</span> offsets &#123;</span><br><span class="line">    <span class="keyword">if</span> offset &gt;= r.bits &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, ErrTooLargeOffset</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    args = <span class="built_in">append</span>(args, strconv.FormatUint(<span class="keyword">uint64</span>(offset), <span class="number">10</span>))</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> args, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *redisBitSet)</span> <span class="title">check</span><span class="params">(offsets []<span class="keyword">uint</span>)</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">  args, err := r.buildOffsetArgs(offsets)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  resp, err := r.store.Eval(testScript, []<span class="keyword">string</span>&#123;r.key&#125;, args)</span><br><span class="line">  <span class="keyword">if</span> err == redis.Nil &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>, <span class="literal">nil</span></span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  exists, ok := resp.(<span class="keyword">int64</span>)</span><br><span class="line">  <span class="keyword">if</span> !ok &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>, <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> exists == <span class="number">1</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *redisBitSet)</span> <span class="title">set</span><span class="params">(offsets []<span class="keyword">uint</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">  args, err := r.buildOffsetArgs(offsets)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  _, err = r.store.Eval(setScript, []<span class="keyword">string</span>&#123;r.key&#125;, args)</span><br><span class="line">  <span class="keyword">if</span> err == redis.Nil &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以观察到 <code>getLocation</code> 函数中的 <code>k</code> 个不同 hash 函数是通过同样的 hash 函数每次循环在 <code>data</code> 末尾增加一个确定的字节来实现的，这里选择了 <code>murmur3</code> 作为 hash 函数。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Hash</span><span class="params">(data []<span class="keyword">byte</span>)</span> <span class="title">uint64</span></span> &#123;</span><br><span class="line">  <span class="keyword">return</span> murmur3.Sum64(data)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>几种常见的非密码学 hash 函数：</p>
+<ul>
+<li>CRC-64(1975) - Used in networking for error detection.</li>
+<li>MurmurHash(2008) - Designed to a fast, general purpose hash function.</li>
+<li>Google CityHash(2011) - Designed to be faster for short keys (&lt;64 bytes).</li>
+<li>Facebook XXHash(2012) - From the creator of zstd compression.</li>
+<li>Google FarmHash(2014) - Newer version of CityHash with better collision rates.</li>
+</ul>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/algorithm/">algorithm</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/06/09/b-plus-tree-index-3/">
+        <span class="next-text nav-default">B Plus Tree Index 3</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
