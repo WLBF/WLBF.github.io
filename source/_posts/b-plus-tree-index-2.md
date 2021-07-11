@@ -6,7 +6,7 @@ tags: [database, cmu-15445]
 
 ## Deletion
 
-B+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。
+B+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 unit test，否则很难正确实现。
 
 Whereas in inserts we occasionally had to split leaves when the tree got too full, if a deletion causes a tree
 to be less than half-full, we must merge in order to re-balance the tree.
