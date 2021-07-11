@@ -35,13 +35,13 @@
 <link rel="canonical" href="http://yoursite.com/2021/05/09/b-plus-tree-index-2/">
 
 
-<meta name="description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta name="description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 unit test，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree go">
 <meta name="keywords" content="database,cmu-15445">
 <meta property="og:type" content="article">
 <meta property="og:title" content="B Plus Tree Index 2">
 <meta property="og:url" content="http://yoursite.com/2021/05/09/b-plus-tree-index-2/index.html">
 <meta property="og:site_name" content="WLBF">
-<meta property="og:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta property="og:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 unit test，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree go">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="https://i.imgur.com/Z9I5osf.png">
 <meta property="og:image" content="https://i.imgur.com/9QypOKa.png">
@@ -55,10 +55,10 @@
 <meta property="og:image" content="https://i.imgur.com/eL04S3y.png">
 <meta property="og:image" content="https://i.imgur.com/iH8ihvP.png">
 <meta property="og:image" content="https://i.imgur.com/tllT9jx.png">
-<meta property="og:updated_time" content="2021-06-08T16:24:06.315Z">
+<meta property="og:updated_time" content="2021-06-14T18:07:04.280Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="B Plus Tree Index 2">
-<meta name="twitter:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree got too">
+<meta name="twitter:description" content="DeletionB+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 unit test，否则很难正确实现。 Whereas in inserts we occasionally had to split leaves when the tree go">
 <meta name="twitter:image" content="https://i.imgur.com/Z9I5osf.png">
 
 
@@ -143,7 +143,7 @@
 
     
             <div class="post-content">
-            <h2 id="Deletion"><a href="#Deletion" class="headerlink" title="Deletion"></a>Deletion</h2><p>B+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 case，否则很难正确实现。</p>
+            <h2 id="Deletion"><a href="#Deletion" class="headerlink" title="Deletion"></a>Deletion</h2><p>B+ tree 的删除过程相对于插入过程要更复杂一些，包括 merge(coalsece) 和 redistribute 以及 adjust root 这三种情况，在实现过程中要细心编写针对各种情况的 unit test，否则很难正确实现。</p>
 <p>Whereas in inserts we occasionally had to split leaves when the tree got too full, if a deletion causes a tree<br>to be less than half-full, we must merge in order to re-balance the tree.</p>
 <ol>
 <li>Find correct leaf L.</li>
