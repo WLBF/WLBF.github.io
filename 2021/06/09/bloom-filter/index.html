@@ -44,7 +44,7 @@
 <meta property="og:description" content="简介Bloom Filter 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。简单描述： 存在一个 m 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 k 个不同的 h">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png">
-<meta property="og:updated_time" content="2021-06-14T15:24:47.475Z">
+<meta property="og:updated_time" content="2021-07-13T07:41:43.561Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Bloom Filter">
 <meta name="twitter:description" content="简介Bloom Filter 算是原理很简单但应用很广泛的一个算法，用途是快速判断一个元素是否存在于集合中。存在假阳性 (false postive) 现象，但不会出现假阴性 (false negative) 现象，即算法给出存在的元素有一定概率不存在，如果算法给出不存在的元素则一定不存在。简单描述： 存在一个 m 位的 bit 数组，初始状态下所有 bit 都设置位 0。同时有 k 个不同的 h">
@@ -137,7 +137,8 @@
 <li><strong>添加：</strong>使用 <code>k</code> 个 hash 函数对新元素进行计算，得到 <code>k</code> 个不同的位置，并把 bit 数组中的这些位置设为 1。</li>
 <li><strong>搜索：</strong>使用 <code>k</code> 个 hash 函数对新元素进行计算，得到 <code>k</code> 个不同的位置，检查 bit 数组中这些位置是否全部为 1，如果符合则返回 true。</li>
 </ul>
-<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png" alt="bloom-filter"></p>
+<div align="center"><br>    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/974px-Bloom_filter.svg.png" width="70%" height="70%"><br></div>
+
 <h2 id="参数选择"><a href="#参数选择" class="headerlink" title="参数选择"></a>参数选择</h2><p>对于给定 <code>m</code> 位 bit 数组， 元素总数为 <code>n</code> ，使假阳性概率最低的 hash 函数数量 <code>k = m/n*ln2</code>。在 <a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener">go-zero</a> 的实现中设置 <code>k</code> 为固定值 14，具体的假阳性概率可以参考 <a href="http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html" target="_blank" rel="noopener">Bloom Filters - the math</a></p>
 <h2 id="RedisBloom"><a href="#RedisBloom" class="headerlink" title="RedisBloom"></a>RedisBloom</h2><p>redis 4.0 之后引入了 module 机制，可以很轻松地使用 RedisBloom module 实现 bloom filter 功能：<br><a href="https://github.com/RedisBloom/RedisBloom/" target="_blank" rel="noopener">https://github.com/RedisBloom/RedisBloom/</a></p>
 <h2 id="手动实现"><a href="#手动实现" class="headerlink" title="手动实现"></a>手动实现</h2><p>如果基于某种原因，比如 GCP 不支持，不能直接使用 redis module，可以手动实现基于 redis 的 bloom filter。参考 <a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener">go-zero</a> 的实现（省略了一些代码）：</p>
@@ -171,6 +172,12 @@
         
         
   <nav class="post-nav">
+    
+      <a class="prev" href="/2021/07/13/zookeeper-1/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">Zookeeper 1</span>
+        <span class="prev-text nav-mobile">Prev</span>
+      </a>
     
     
       <a class="next" href="/2021/06/09/b-plus-tree-index-3/">
