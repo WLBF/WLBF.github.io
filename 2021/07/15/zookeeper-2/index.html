@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Zookeeper 2">
+
+
+
+
+  <meta name="keywords" content="distributed-system,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2021/07/15/zookeeper-2/">
+
+
+<meta name="description" content="Examples of primitivesCounter使用 update 条件更新实现计数器： 123x, v = getData(&amp;quot;cnt&amp;quot;)if setData(&amp;quot;cnt&amp;quot;, x + 1, v), exitgoto 1 Configuration Management使用 zookeeper 进行分布式应用配置管理。最简单的例子：假设配置数据存储在">
+<meta name="keywords" content="distributed-system">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Zookeeper 2">
+<meta property="og:url" content="http://yoursite.com/2021/07/15/zookeeper-2/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="Examples of primitivesCounter使用 update 条件更新实现计数器： 123x, v = getData(&amp;quot;cnt&amp;quot;)if setData(&amp;quot;cnt&amp;quot;, x + 1, v), exitgoto 1 Configuration Management使用 zookeeper 进行分布式应用配置管理。最简单的例子：假设配置数据存储在">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2021-07-17T14:27:56.747Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Zookeeper 2">
+<meta name="twitter:description" content="Examples of primitivesCounter使用 update 条件更新实现计数器： 123x, v = getData(&amp;quot;cnt&amp;quot;)if setData(&amp;quot;cnt&amp;quot;, x + 1, v), exitgoto 1 Configuration Management使用 zookeeper 进行分布式应用配置管理。最简单的例子：假设配置数据存储在">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Zookeeper 2 - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Zookeeper 2
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 15 2021
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <h2 id="Examples-of-primitives"><a href="#Examples-of-primitives" class="headerlink" title="Examples of primitives"></a>Examples of primitives</h2><h3 id="Counter"><a href="#Counter" class="headerlink" title="Counter"></a>Counter</h3><p>使用 update 条件更新实现计数器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">x, v = getData(&quot;cnt&quot;)</span><br><span class="line">if setData(&quot;cnt&quot;, x + 1, v), exit</span><br><span class="line">goto 1</span><br></pre></td></tr></table></figure>
+<h3 id="Configuration-Management"><a href="#Configuration-Management" class="headerlink" title="Configuration Management"></a>Configuration Management</h3><p>使用 zookeeper 进行分布式应用配置管理。最简单的例子：假设配置数据存储在 znode <code>zc</code> 中，进程只需要循环调用设置了 watch flag 的 getData 方法即可实现 <code>zc</code> 发生改动时，及时获取最新配置。<br>另一个更复杂的例子：集群中有多个进程，其中一个进程会被选举为 leader，每次被选举为 leader 的进程将会更新多个配置，因此配置更新应当满足：</p>
+<ul>
+<li>只有当 leader 完成所有配置修改，剩余进程才能观察到，follower 进程不可以使用部分更新的配置。</li>
+<li>如果 leader 在更新配置的过程中崩溃，follower 进程不可以使用残留的部分更新的配置。</li>
+</ul>
+<p>为了满足上述要求，可以设置一个 znode ready，leader 首先将 ready 置为 false，只有在完成所有配置更新之后才会将 ready 设为 true，follower 进程只有观察到 ready 节点为 true，才会去读取配置。<br>上述解决方案还有一个问题，如果配置在 follower 读取过程中又再次被修改，这种情况下 follower 可能会读到 corrupted 配置。这个问题可以通过 watch flag 来解决，如果 follower 在读取配置过程中再次收到了 ready 改变通知，就放弃本次读取，重启读取流程。</p>
+<h3 id="Rendezvous"><a href="#Rendezvous" class="headerlink" title="Rendezvous"></a>Rendezvous</h3><p>很多时候分布式系统中，进程启动并没有特定的顺序。例如要启动一个 master 进程和多个 worker 进程，worker 进程可能先于 master 进程启动，此时就可以通过向 master 和 worker 传递一个 znode path <code>zr</code>，master 启动后向 <code>zr</code> 写入自己的地址和端口， worker 进程通过 watch <code>zr</code>，来获知 master 已经启动以及连接方式和。如果 <code>zr</code> 是一个 ephemarl node，那么还可以通过 <code>zr</code> 控制 master 和 worker 的生命周期。</p>
+<h3 id="Group-Membership"><a href="#Group-Membership" class="headerlink" title="Group Membership"></a>Group Membership</h3><p>ephemarl 机制还可以用来实现 group membership，根据 session 机制 ephemarl node 反映了创建该 znode 的 member 的状态。使用 znode <code>zg</code> 代表集群，每个 member 进程启动时在 <code>zg</code>下创建一个名字为 唯一标识符的子节点，唯一标识符可以通过 sequential flag 来分配。member 进程还可以将自己的地址端口等信息写入创建的节点中。<br>当 member 进程结束或崩溃时，session 被释放，该 member 对应的 znode 也会被自动移除，无需其他操作。<br>可以通过获取 <code>zg</code> 的子节点列表获取集群的信息，如果想要持续监视集群的状态，只需要将 watch flag 设为 true， 循环调用 <code>getChildren(zg, true)</code>，每当集群出现成员变动时监视进程就可以收到通知。 </p>
+<h3 id="Simple-Locks"><a href="#Simple-Locks" class="headerlink" title="Simple Locks"></a>Simple Locks</h3><p>使用 zookeeper 来实现分布式锁，最简单的实现是，每个 client 尝试创建一个 path 相同的 ephemeral node <code>zl</code>，如果创建成功说明获取到了锁。如果失败则开始 watch <code>zl</code>，如果收到了 <code>zl</code> 被删除的通知，就再次尝试创建 <code>zl</code>。持有锁的 client 主动删除或崩溃都会导致 <code>zl</code> 被移除，也就释放了锁。这种实现有两个问题：1. 惊群 2. 无法实现读写锁。</p>
+<h3 id="Simple-Locks-without-Herd-Effect"><a href="#Simple-Locks-without-Herd-Effect" class="headerlink" title="Simple Locks without Herd Effect"></a>Simple Locks without Herd Effect</h3><p><strong>Lock</strong></p>
+<p>获取锁的过程是，首先在 znode <code>l</code> 下创建一个 sequential|ephemeral znode，之后通过 getChildren 检查是否存在名字小于自己的 znode，如果存在那么就等待小于自己的 znode 被移除，如果没有小于自己的 znode 那么代表着成功获取了锁。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">n = create(l + “/lock-”, EPHEMERAL|SEQUENTIAL)</span><br><span class="line">C = getChildren(l, false)</span><br><span class="line">if n is lowest znode in C, exit</span><br><span class="line">p = znode in C ordered just before n</span><br><span class="line">if exists(p, true) wait for watch event</span><br><span class="line">goto 2</span><br></pre></td></tr></table></figure>
+<p><strong>Unlock</strong></p>
+<p>释放锁只需要主动删除自己创建的 znode</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete(n)</span><br></pre></td></tr></table></figure>
+<p>这种实现可以看成是将获取锁的请求在 zookeeper 中构造成队列，这种实现的优点：</p>
+<ol>
+<li>释放锁只会准确地唤醒排列在自己之后的节点，不存在惊群问题。</li>
+<li>不需要 client 端进行 polling 或设置 timeouts。</li>
+<li>获取锁的请求被顺序存储在 zookeeper 中，方便用户观察锁的竞争度，也可以用来 debug，或是实现死锁检测。</li>
+</ol>
+<h3 id="Read-Write-Locks"><a href="#Read-Write-Locks" class="headerlink" title="Read/Write Locks"></a>Read/Write Locks</h3><p>上一个例子也很容易修改成读写锁。获取读锁过程中在检查子节点列表时，如果自己之前没有写锁，那么就可以判断获取读锁成功。如果有写锁那么等待第一个小于自己的写锁被释放。会存在多个读锁同时等待同一个写锁的情况，这个写锁被移除后，后续的读锁会同时被唤醒，这也正好符合读写锁的特性。</p>
+<p><strong>Write Lock</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">n = create(l + “/write-”, EPHEMERAL|SEQUENTIAL)</span><br><span class="line">C = getChildren(l, false)</span><br><span class="line">if n is lowest znode in C, exit</span><br><span class="line">p = znode in C ordered just before n</span><br><span class="line">if exists(p, true) wait for event</span><br><span class="line">goto 2</span><br></pre></td></tr></table></figure></p>
+<p><strong>Read Lock</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">n = create(l + “/read-”, EPHEMERAL|SEQUENTIAL)</span><br><span class="line">C = getChildren(l, false)</span><br><span class="line">if no write znodes lower than n in C, exit</span><br><span class="line">p = write znode in C ordered just before n</span><br><span class="line">if exists(p, true) wait for event</span><br><span class="line">goto 3</span><br></pre></td></tr></table></figure></p>
+<h3 id="Double-Barrier"><a href="#Double-Barrier" class="headerlink" title="Double Barrier"></a>Double Barrier</h3><p>实现分布式进程间的同步。设置 znode <code>b</code> 代表 barrier，每个进程在 <code>b</code> 下创建子节点来注册 barrier，删除子节点来注销 barrier，表明自己准备好离开。每个都进程可以通过观察 <code>b</code> 的子节点数量是否超过 threshold 来判断是否进入，通过 <code>b</code> 的所有子节点是否都被删除来判断是否离开 barrier。</p>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/distributed-system/">distributed-system</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/07/13/zookeeper-1/">
+        <span class="next-text nav-default">Zookeeper 1</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2021
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
