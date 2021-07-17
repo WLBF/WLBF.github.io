@@ -1,6 +1,6 @@
 ---
 title: Zookeeper 1
-tags: [distributed-system]
+tags: [distributed-system, zookeeper]
 date: 2021-07-13 01:21:41
 ---
 
