@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang>
+  <head><meta name="generator" content="Hexo 3.8.0">
+    
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+  <meta name="description" content="Kubernetes Device Plugin">
+
+
+
+
+  <meta name="keywords" content="k8s,">
+
+
+
+
+
+  <link rel="alternate" href="/default" title="WLBF">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.1">
+
+
+
+<link rel="canonical" href="http://yoursite.com/2022/01/17/k8s-device-plugin/">
+
+
+<meta name="description" content="k8s 的 devcie plugin framework 给了开发者自己实现 device plugin 来向 k8s 集群中声明自定义硬件资源的能力。device plugin 实现上是一个 grpc server，device plugin 首先会向 kubelet 注册自己， 之后kubelet 会调用 device plugin 的 grpc 函数来获取需要的硬件信息。一个简单的 dev">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes Device Plugin">
+<meta property="og:url" content="http://yoursite.com/2022/01/17/k8s-device-plugin/index.html">
+<meta property="og:site_name" content="WLBF">
+<meta property="og:description" content="k8s 的 devcie plugin framework 给了开发者自己实现 device plugin 来向 k8s 集群中声明自定义硬件资源的能力。device plugin 实现上是一个 grpc server，device plugin 首先会向 kubelet 注册自己， 之后kubelet 会调用 device plugin 的 grpc 函数来获取需要的硬件信息。一个简单的 dev">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2022-01-17T17:43:36.324Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kubernetes Device Plugin">
+<meta name="twitter:description" content="k8s 的 devcie plugin framework 给了开发者自己实现 device plugin 来向 k8s 集群中声明自定义硬件资源的能力。device plugin 实现上是一个 grpc server，device plugin 首先会向 kubelet 注册自己， 之后kubelet 会调用 device plugin 的 grpc 函数来获取需要的硬件信息。一个简单的 dev">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.1">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+    <title> Kubernetes Device Plugin - WLBF </title>
+  </head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">WLBF</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Kubernetes Device Plugin
+        
+      </h1>
+
+      <time class="post-time">
+          Jan 17 2022
+      </time>
+    </header>
+
+
+
+    
+            <div class="post-content">
+            <p>k8s 的 devcie plugin framework 给了开发者自己实现 device plugin 来向 k8s 集群中声明自定义硬件资源的能力。device plugin 实现上是一个 grpc server，device plugin 首先会向 kubelet 注册自己， 之后kubelet 会调用 device plugin 的 grpc 函数来获取需要的硬件信息。一个简单的 device plugn 例子： <a href="https://github.com/WLBF/null-device-plugin" target="_blank" rel="noopener">github.com/WLBF/null-device-plugin</a></p>
+<h2 id="grpc-接口"><a href="#grpc-接口" class="headerlink" title="grpc 接口"></a>grpc 接口</h2><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">Registration</span> </span>&#123;</span><br><span class="line">      <span class="function"><span class="keyword">rpc</span> Register(RegisterRequest) <span class="keyword">returns</span> (Empty) &#123;&#125;</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">DevicePlugin</span> </span>&#123;</span><br><span class="line">      <span class="comment">// GetDevicePluginOptions returns options to be communicated with Device Manager.</span></span><br><span class="line">      <span class="function"><span class="keyword">rpc</span> GetDevicePluginOptions(Empty) <span class="keyword">returns</span> (DevicePluginOptions) &#123;&#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">      // ListAndWatch <span class="keyword">returns</span> a stream of List of Devices</span></span><br><span class="line"><span class="function">      // Whenever a Device state change or a Device disappears, ListAndWatch</span></span><br><span class="line"><span class="function">      // <span class="keyword">returns</span> the new list</span></span><br><span class="line"><span class="function">      <span class="keyword">rpc</span> ListAndWatch(Empty) <span class="keyword">returns</span> (stream ListAndWatchResponse) &#123;&#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">      // Allocate is called during container creation so that the Device</span></span><br><span class="line"><span class="function">      // Plugin can run device specific operations and instruct Kubelet</span></span><br><span class="line"><span class="function">      // of the steps to make the Device available in the container</span></span><br><span class="line"><span class="function">      <span class="keyword">rpc</span> Allocate(AllocateRequest) <span class="keyword">returns</span> (AllocateResponse) &#123;&#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">      // GetPreferredAllocation <span class="keyword">returns</span> a preferred set of devices to allocate</span></span><br><span class="line"><span class="function">      // from a list of available ones. The resulting preferred allocation is not</span></span><br><span class="line"><span class="function">      // guaranteed to be the allocation ultimately performed by the</span></span><br><span class="line"><span class="function">      // devicemanager. It is only designed to help the devicemanager make a more</span></span><br><span class="line"><span class="function">      // informed allocation decision when possible.</span></span><br><span class="line"><span class="function">      <span class="keyword">rpc</span> GetPreferredAllocation(PreferredAllocationRequest) <span class="keyword">returns</span> (PreferredAllocationResponse) &#123;&#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">      // PreStartContainer is called, if indicated by Device Plugin during registeration phase,</span></span><br><span class="line"><span class="function">      // before each container start. Device plugin can run device specific operations</span></span><br><span class="line"><span class="function">      // such as resetting the device before making devices available to the container.</span></span><br><span class="line"><span class="function">      <span class="keyword">rpc</span> PreStartContainer(PreStartContainerRequest) <span class="keyword">returns</span> (PreStartContainerResponse) &#123;&#125;</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="注册"><a href="#注册" class="headerlink" title="注册"></a>注册</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  <span class="comment">// Healthy means that the device is healthy</span></span><br><span class="line">  Healthy = <span class="string">"Healthy"</span></span><br><span class="line">  <span class="comment">// Unhealthy means that the device is unhealthy</span></span><br><span class="line">  Unhealthy = <span class="string">"Unhealthy"</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Version means current version of the API supported by kubelet</span></span><br><span class="line">  Version = <span class="string">"v1beta1"</span></span><br><span class="line">  <span class="comment">// DevicePluginPath is the folder the Device Plugin is expecting sockets to be on</span></span><br><span class="line">  <span class="comment">// Only privileged pods have access to this path</span></span><br><span class="line">  <span class="comment">// Note: Placeholder until we find a "standard path"</span></span><br><span class="line">  DevicePluginPath = <span class="string">"/var/lib/kubelet/device-plugins/"</span></span><br><span class="line">  <span class="comment">// KubeletSocket is the path of the Kubelet registry socket</span></span><br><span class="line">  KubeletSocket = DevicePluginPath + <span class="string">"kubelet.sock"</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// DevicePluginPathWindows Avoid failed to run Kubelet: bad socketPath,</span></span><br><span class="line">  <span class="comment">// must be an absolute path: /var/lib/kubelet/device-plugins/kubelet.sock</span></span><br><span class="line">  <span class="comment">// https://github.com/kubernetes/kubernetes/issues/93262</span></span><br><span class="line">  <span class="comment">// https://github.com/kubernetes/kubernetes/pull/93285#discussion_r458140701</span></span><br><span class="line">  DevicePluginPathWindows = <span class="string">"\\var\\lib\\kubelet\\device-plugins\\"</span></span><br><span class="line">  <span class="comment">// KubeletSocketWindows is the path of the Kubelet registry socket on windows</span></span><br><span class="line">  KubeletSocketWindows = DevicePluginPathWindows + <span class="string">"kubelet.sock"</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// KubeletPreStartContainerRPCTimeoutInSecs is the timeout duration in secs for PreStartContainer RPC</span></span><br><span class="line">  <span class="comment">// Timeout duration in secs for PreStartContainer RPC</span></span><br><span class="line">  KubeletPreStartContainerRPCTimeoutInSecs = <span class="number">30</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>device plugin 首先通过路径为 <code>/var/lib/kubelet/device-plugins/kubelet.sock</code> 的 unix socket 向 kubelet 注册自己。之后会在 <code>/var/lib/kubelet/device-plugins/</code> 目录下生成一个 unix socket 来提供 grpc 服务给 kubelet 调用，所以注册参数中包含了 unix socket 的名称。注册参数中的 <code>ResourceName</code> 就是向集群中注册的资源名称</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Register registers the device plugin for the given resourceName with Kubelet.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *NullDevicePlugin)</span> <span class="title">Register</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">  conn, err := m.dial(pluginapi.KubeletSocket, <span class="number">5</span>*time.Second)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">defer</span> conn.Close()</span><br><span class="line"></span><br><span class="line">  client := pluginapi.NewRegistrationClient(conn)</span><br><span class="line">  reqt := &amp;pluginapi.RegisterRequest&#123;</span><br><span class="line">    Version:      pluginapi.Version,</span><br><span class="line">    Endpoint:     <span class="string">"example-null.sock"</span>,</span><br><span class="line">    ResourceName: <span class="string">"example.com/null"</span>,</span><br><span class="line">    Options: &amp;pluginapi.DevicePluginOptions&#123;</span><br><span class="line">      GetPreferredAllocationAvailable: <span class="literal">false</span>,</span><br><span class="line">      PreStartRequired:                <span class="literal">false</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  _, err = client.Register(context.Background(), reqt)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>DevicePluginOptions</code> 标示了 kubelet 是否需要调用 <code>GetPreferredAllocation</code> 和 <code>PreStartContainer</code> 这两个可选接口。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> DevicePluginOptions <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// Indicates if PreStartContainer call is required before each container start</span></span><br><span class="line">  PreStartRequired <span class="keyword">bool</span> <span class="string">`protobuf:"varint,1,opt,name=pre_start_required,json=preStartRequired,proto3" json:"pre_start_required,omitempty"`</span></span><br><span class="line">  <span class="comment">// Indicates if GetPreferredAllocation is implemented and available for calling</span></span><br><span class="line">  GetPreferredAllocationAvailable <span class="keyword">bool</span>     <span class="string">`protobuf:"varint,2,opt,name=get_preferred_allocation_available,json=getPreferredAllocationAvailable,proto3" json:"get_preferred_allocation_available,omitempty"`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="kubelet-重启"><a href="#kubelet-重启" class="headerlink" title="kubelet 重启"></a>kubelet 重启</h3><p>device plugin 还需要在 kubelet 重启时重新注册自己。kubelet 在重启时会将 <code>/var/lib/kubelet/device-plugins/</code> 下所有 unix socket 删除，device plugin 可以通过监测 unix socket 是否被删除来感知 kubelet 重启，继而重新注册。</p>
+<h3 id="设备列表"><a href="#设备列表" class="headerlink" title="设备列表"></a>设备列表</h3><p>kubelet 一定会调用的两个接口是 <code>ListAndWatch</code> 和 <code>Allocate</code>，protobuf 中的注释已经解释的很清楚了, 比如下面 <code>ListAndWatch</code> 代码向 kubelet 注册了两个假的设备， 注意这里还上报了设备的健康状况，在真实场景下如果设备健康状况出现变化，还需要及时发送新设备列表给 kubelet。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ListAndWatch lists devices and update that list according to the health status</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *NullDevicePlugin)</span> <span class="title">ListAndWatch</span><span class="params">(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">  devices := []*pluginapi.Device&#123;</span><br><span class="line">    &#123;</span><br><span class="line">      ID:     <span class="string">"0e2da650-5f9f-4ba2-a42d-592ee5cd3616"</span>,</span><br><span class="line">      Health: pluginapi.Healthy,</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      ID:     <span class="string">"4516ceb8-cafa-45f3-9d93-147c1a9c072b"</span>,</span><br><span class="line">      Health: pluginapi.Healthy,</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> err := s.Send(&amp;pluginapi.ListAndWatchResponse&#123;Devices: devices&#125;); err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">  &#125;</span><br><span class="line">  &lt;-s.Context().Done()</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>在通过 daemonset 在测试集群中部署 device plugin 之后，describe node 可以观察到新注册的资源信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl describe no worker-0</span><br><span class="line">...</span><br><span class="line">Capacity:</span><br><span class="line">  cpu:                2</span><br><span class="line">  ephemeral-storage:  4901996Ki</span><br><span class="line">  example.com/null:   2</span><br><span class="line">  hugepages-1Gi:      0</span><br><span class="line">  hugepages-2Mi:      0</span><br><span class="line">  memory:             2030684Ki</span><br><span class="line">  pods:               110</span><br><span class="line">Allocatable:</span><br><span class="line">  cpu:                2</span><br><span class="line">  ephemeral-storage:  4517679507</span><br><span class="line">  example.com/null:   2</span><br><span class="line">  hugepages-1Gi:      0</span><br><span class="line">  hugepages-2Mi:      0</span><br><span class="line">  memory:             1928284Ki</span><br><span class="line">  pods:               110</span><br><span class="line">...</span><br><span class="line">Allocated resources:</span><br><span class="line">  (Total limits may be over 100 percent, i.e., overcommitted.)</span><br><span class="line">  Resource           Requests   Limits</span><br><span class="line">  --------           --------   ------</span><br><span class="line">  cpu                100m (5%)  100m (5%)</span><br><span class="line">  memory             50Mi (2%)  50Mi (2%)</span><br><span class="line">  ephemeral-storage  0 (0%)     0 (0%)</span><br><span class="line">  hugepages-1Gi      0 (0%)     0 (0%)</span><br><span class="line">  hugepages-2Mi      0 (0%)     0 (0%)</span><br><span class="line">  example.com/null   0          0</span><br></pre></td></tr></table></figure>
+
+            </div>
+          
+
+    
+      <footer class="post-footer">
+		
+		<div class="post-tags">
+		  
+			<a href="/tags/k8s/">k8s</a>
+		  
+		</div>
+		
+
+        
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/2021/07/18/kafka/">
+        <span class="next-text nav-default">Kafka</span>
+        <span class="prev-text nav-mobile">Next</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+        
+  <div class="comments" id="comments">
+    
+      <div class="comments" id="comments">
+        <div id="gitalk-container"></div>
+      </div>
+    
+  </div>
+
+
+      </footer>
+    
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2014 -
+    
+    2022
+    <span class="footer-author">WLBF.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" href="https://hexo.io/">Hexo</a> and <a class="theme-link" href="https://github.com/frostfan/hexo-theme-polarbear">Polar Bear</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+
+
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+  <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+  <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script>
+   <script type="text/javascript">
+        var gitalk = new Gitalk({
+          clientID: 'f891009fcd2431859813',
+          clientSecret: '45a46aabb25c0175e2cb4fd784858a8420208623',
+          repo: 'blogtalk',
+          owner: 'WLBF',
+          admin: ['WLBF'],
+          id: md5(location.pathname),
+          distractionFreeMode: false
+        })
+        gitalk.render('gitalk-container')
+       </script>
+
+
+
+
+    
+
+
+
+
+  
+    <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+  
+
+  
+
+    <script type="text/javascript" src="/js/src/theme.js?v=1.1"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.1"></script>
+
+  </body>
+</html>
