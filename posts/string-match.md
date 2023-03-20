@@ -1,8 +1,9 @@
----
+# String Match
+<!-- ---
 title: String Match
 date: 2017-04-30
 tag: Algorithm
----
+--- -->
 碰到了字符串匹配的需求，算法导论中文版翻译得还挺好的。
 先从最简单的算法开始：
 

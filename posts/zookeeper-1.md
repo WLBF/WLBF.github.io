@@ -1,13 +1,11 @@
----
+# Zookeeper 1
+<!-- ---
 title: Zookeeper 1
 tags: [distributed-system, zookeeper]
 date: 2021-07-13 01:21:41
----
-
+--- -->
 
 拖延了很久，终于读了一遍 zookeeper 的论文。
-
-
 
 ## Service Overview
 

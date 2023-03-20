@@ -1,8 +1,9 @@
----
+# Kubernetes Device Plugin
+<!-- ---
 title: Kubernetes Device Plugin
 tags: k8s
 date: 2022-01-17 22:09:20
----
+--- -->
 
 k8s 的 devcie plugin framework 给了开发者自己实现 device plugin 来向 k8s 集群中声明自定义硬件资源的能力。device plugin 实现上是一个 grpc server，device plugin 首先会向 kubelet 注册自己， 之后kubelet 会调用 device plugin 的 grpc 函数来获取需要的硬件信息。一个简单的 device plugn 例子： [github.com/WLBF/null-device-plugin](https://github.com/WLBF/null-device-plugin)
 

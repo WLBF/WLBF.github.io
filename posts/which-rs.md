@@ -1,8 +1,9 @@
----
+# Rust Which
+<!-- ---
 title: Rust Which
 date: 2018-03-18 21:02:48
 tags:
----
+--- -->
 在 windows 上 rust 标准库里的 `Command::spawn` 在寻找可执行文件的问题上有一些奇怪的问题，详见 issue:
 [https://github.com/rust-lang/rust/issues/37519](https://github.com/rust-lang/rust/issues/37519)
 

@@ -1,8 +1,9 @@
----
+# Buffer Pool Manager
+<!-- ---
 title: Buffer Pool Manager
 date: 2021-04-29 20:15:17
 tags: [database, cmu-15445]
----
+--- -->
 开始学习 CMU-15445，别人的优秀笔记：[https://zhenghe.gitbook.io/open-courses/](https://zhenghe.gitbook.io/open-courses/)
 
 

@@ -1,8 +1,9 @@
----
+# JavaScript Timer
+<!-- ---
 title: JavaScript Timer
 date: 2016-02-12
 tag: JavaScript
----
+--- -->
 最近遇到了setTimeout这个东西。发现了一篇著名的文章。网上已经有许多翻译，但我还是决定自己尝试翻译一下。如有错漏，欢迎指正。
 原文：
 [How JavaScript Timers Work](https://johnresig.com/blog/how-javascript-timers-work/)

@@ -1,8 +1,9 @@
----
+# Windows Manifest
+<!-- ---
 title: Windows Manifest
 date: 2018-03-12 22:57:43
 tags: 日常
----
+--- -->
 
 最近用 rust 在 windows 上写安装程序，碰到了 PCA(Program Compatibility Assistant) 的问题，安装卸载的时候总是弹窗。msdn 上的有关 PCA 的文档写得不是很详细。后来对比了一下其他的安装程序发现问题出在 manifest 上，在 manifest 中加上 compatibility 字段就解决了。后来发现有个 stackoverflow 问题提到了这个解决方法，可惜没有早点搜到。最后 manifest 长这样：
 

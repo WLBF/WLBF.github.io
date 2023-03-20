@@ -1,8 +1,9 @@
----
+# age - A simple encryption tool
+<!-- ---
 title: age - A simple encryption tool
 date: 2021-04-10 02:29:09
 tags: cryptography
----
+--- -->
 ## Introduction
 
 [age](https://github.com/FiloSottile/age) 是 Actual Good Encryption 的缩写, 是一个简单的现代文件加密工具。类似 GPG 通过非对称与对称加密技术实现文本信息的加密解密功能。age 定义了一种新的密文格式，并且使用了比较现代的加密算法，具体是 x25519 椭圆曲线算法和 chacha20poly1305 aead 算法。GitHub 上也已经有了对应的 rust 实现 [str4d/rage](https://github.com/str4d/rage)。

@@ -1,8 +1,9 @@
----
+# MIT-6.828 2018 Memory Bug
+<!-- ---
 title: MIT-6.828 2018 Memory Bug
 date: 2019-07-20 22:59:54
 tags: [os, debug]
----
+--- -->
 
 在学习 mit-6.828-2018 lab3 的时候遇到了一个很奇怪的问题。lab3 分支 merge 之前已经完成的 lab2 分支后会在某一处 painc。在简单来说 lab3 分支原代码基础上增加一些完全正确的代码，会导致 kernel panic。通过 debug 发现问题出在下面这里：
 

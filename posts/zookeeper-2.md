@@ -1,8 +1,9 @@
----
+# Zookeeper 2
+<!-- ---
 title: Zookeeper 2
 date: 2021-07-15 00:24:37
 tags: [distributed-system, zookeeper]
----
+--- -->
 
 ## Examples of primitives
 

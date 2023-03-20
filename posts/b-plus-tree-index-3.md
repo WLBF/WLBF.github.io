@@ -1,8 +1,9 @@
----
+# B Plus Tree Index 3
+<!-- ---
 title: B Plus Tree Index 3
 date: 2021-06-09 10:57:59
 tags: [database, cmu-15445]
----
+--- -->
 
 在数据库领域一般将操作系统层面上的 lock 称作 latch，为了实现对 B+ tree 的并发访问，需要使用 read write latch 来对树中的 node 进行保护， 对 B+ tree 的并发访问会使用一种叫做 crabbing/coupling 的技巧。
 

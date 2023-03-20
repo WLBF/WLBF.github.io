@@ -1,9 +1,9 @@
----
+# Xv6 Buffer Cache
+<!-- ---
 title: Xv6 Buffer Cache
 date: 2021-04-28 00:32:53
 tags: [xv6, os]
----
-
+--- -->
 
 buffer cache 是文件系统中最接近磁盘的一层抽象，在 6.S081 课程中实现了基于 lru 策略的 buffer cache，在这里做一个总结。 
 

@@ -1,8 +1,9 @@
----
+# Kafka
+<!-- ---
 title: Kafka
 date: 2021-07-18 17:25:43
 tags: [distributed-system, kafka]
----
+--- -->
 
 看完 zookeeper 正好再看看 kafka。kafka 2.8.0 弃用 zookeeper 进行协调，转而开始使用 raft。本篇内容完全基于 kafka 论文，可能会有一些过时的信息。
 

@@ -1,8 +1,10 @@
----
+# Bitcoin
+<!-- ---
 title: Bitcoin
 date: 2018-11-30 16:25:42
 tags: blockchain
----
+--- -->
+
 ## Transactions
 
 We define an electronic coin as a chain of digital signatures. To prevent double-spend, the earlist transaction is the one that counts. The only way to confirm the absence of a transaction is to be aware of all transactions.

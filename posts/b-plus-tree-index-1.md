@@ -1,9 +1,9 @@
----
+# B Plus Tree Index 1
+<!-- ---
 title: B Plus Tree Index 1
 date: 2021-05-09 05:23:34
 tags: [database, cmu-15445]
----
-
+--- -->
 
 CMU-15445 课程的 project 2 是完整实现一个支持并发的 B+ Tree Index。
 

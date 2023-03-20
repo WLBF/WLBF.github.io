@@ -1,8 +1,9 @@
----
+# Elliptic Curve Cryptography
+<!-- ---
 title: Elliptic Curve Cryptography
 date: 2019-07-08 22:45:31
 tags: cryptography
----
+--- -->
 
 [https://eng.paxos.com/blockchain-101-foundational-math](https://eng.paxos.com/blockchain-101-foundational-math)
 [https://www.certicom.com/content/certicom/en/ecc-tutorial.html](https://www.certicom.com/content/certicom/en/ecc-tutorial.html)
