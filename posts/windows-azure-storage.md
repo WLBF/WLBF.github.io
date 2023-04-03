@@ -128,7 +128,7 @@ OT 支持 query/get, insert, update, delete 操作，还支持同一 PartitionNa
 ### Partition Layer Architecture
 
 **Partition Manager (PM)** - 负责将 OT 切分成多个 RangePartition, 维护 RangePartition 和 Partition Server 的关系。对应关系数据存储在 Partiton Map Table 中。每个 stamp 中有多个 PM 实例通过 lock service lease 进行热备。  
-**Partition Server (PS)** - 服务 RangePartition 请求，通过 lease 保证同一个 RangePartition 只有一个 PS提供服务。一个 PS 可以服务多个 OT 的 RangePartition。 
+**Partition Server (PS)** - 服务 RangePartition 请求，通过 lease 保证同一个 RangePartition 只有一个 PS提供服务。一个 PS 可以服务多个 OT 的 RangePartition。   
 **Lock Service** - Paxos 服务用于实现分布式 lease。
 
 ![pic-4](https://i.imgur.com/VT0Uc6v.png)
