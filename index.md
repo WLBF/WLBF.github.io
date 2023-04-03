@@ -1,5 +1,6 @@
 # wlbf.github.io
 
+[Windows Azure Storage](./posts/windows-azure-storage.md)  
 [Log Rotate](./posts/log-rotate.md)  
 [Kubernetes Device Plugin](./posts/k8s-device-plugin.md)  
 [Container Network 1](./posts/container-network-1.md)  
